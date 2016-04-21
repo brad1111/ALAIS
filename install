@@ -1,4 +1,18 @@
 #/bin/bash
+##Find UEFI
+if [[ "$(cat /sys/class/dmi/id/sys_vendor)" == 'Apple Inc.' ]] || [[ "$(cat /sys/class/dmi/id/sys_vendor)" == 'Apple Computer, Inc.' ]]
+    modprobe -r -q efivars || true #Only on a MAC computer
+    else
+    modprobe -q efivarfs
+fi
+UEFI=0 #Default is BIOS
+if [[ -d "/sys/firmware/efi/" ]]; then
+    ##Mount efivarfs if not already mounted
+    if [[ -z $(mount | grep /sys/firmware/efi/efivarfs) ]]; then; mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+    UEFI=1
+    echo Currently in UEFI mode
+fi
+##End Find UEFI
 ##Start PACMAN
 is_package_installed() {
     for PKG in $PKG; do
@@ -105,6 +119,11 @@ fi
 
 ##Choose Partition
 if [[ $BOOL_AUTOINST == FALSE ]]; then
-  BOOL_MENUCOMPLETE=FALSE  
+  BOOL_MENUCOMPLETE=FALSE 
+  while [[ $BOOL_MENUCOMPLETE == FALSE ]]; then
+        clear
+        
+        
+  done
 fi
 ####Config End
