@@ -1,4 +1,7 @@
 #/bin/bash
+##Find RAM
+TOTAL_RAM=2048
+##End Find Ram
 ##Find UEFI
 if [[ "$(cat /sys/class/dmi/id/sys_vendor)" == 'Apple Inc.' ]] || [[ "$(cat /sys/class/dmi/id/sys_vendor)" == 'Apple Computer, Inc.' ]]
     modprobe -r -q efivars || true #Only on a MAC computer
@@ -116,13 +119,45 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
         fi
     done
 fi
+DEVICE_PARTITION_TABLE=NULL
+DEVICE_ESP=
+DEVICE_SWAP=
+DEVICE_ROOT=
+if [[ $BOOL_AUTOINST == FALSE ]]; then; partitioner=parted; fi
+partition_man()
+{
+    if [[ partitioner == parted ]]; then
+        if [[ %1 == mbr ]]; then
+            parted mklabel msdos
+            DEVICE_PARTITION_TABLE=msdos
+        elif [[ %1 == gpt ]]; then
+            parted mklabel gpt
+            DEVICE_PARTITION_TABLE=gpt
+        elif [[ %1 == esp ]]; then
+            parted mkpart primary fat32 512MB
+            DEVICE_ESP=/dev/sd{$device}1
+        elif [[ %1 == swap ]]; then
+            parted mkpart primary linux-swap $TOTAL_RAM
+            if [[ $DEVICE_ESP ]]; then; DEVICE_SWAP=/dev/sd{$device}1; else; DEVICE_SWAP=/dev/sd{$device}2; fi
+        elif [[ %1 == root ]]; then
+            parted mkpart primary ext4 100%
+            if [[ $DEVICE_SWAP == /dev/sd{$device}1 ]]; then; DEVICE_ROOT=/dev/sd{$device}2; elif [[ $DEVICE_SWAP == /dev/sd{$device}2 ]]; then; DEVICE_ROOT=/dev/sd{$device}3; else; echo An Error occured partitioning Root; read; exit 1; fi
+        fi
+    fi
+}
+
 
 ##Choose Partition
 if [[ $BOOL_AUTOINST == FALSE ]]; then
   BOOL_MENUCOMPLETE=FALSE 
   while [[ $BOOL_MENUCOMPLETE == FALSE ]]; then
         clear
-        
+        ###UEFI Partition
+        if [[ UEFI == 1 ]]; then
+            partition_man "esp"
+        fi
+        partition_man "swap"
+        partition_man "root"
         
   done
 fi
