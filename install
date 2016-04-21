@@ -1,0 +1,110 @@
+#/bin/bash
+##Start PACMAN
+is_package_installed() {
+    for PKG in $PKG; do
+        pacman -Q $CHKPKGS &> /dev/null && return 0;
+    done
+    return 1
+}
+
+
+package_install() { 
+    for PKG in ${1}; do
+        if ! is_package_installed "${PKG}" ; then
+            pacman -S --noconfirm --needed ${PKG}
+        fi
+    done
+}
+
+##END PACMAN
+check_connection() {
+ping -q -w 1 -c 1 `ip r | grep default | awk 'NR==1 {print $3}'` &> /dev/null && return 1 || return 0
+}
+if check_connection(); then
+    echo Please connect to a network
+    read
+    exit 1
+fi
+
+BOOL_AUTOINST=FALSE
+if [[ -f `pwd`/autoinstall ]]; then #Checks for AutoInstall script for arch linux
+    source autoinstall
+fi
+####Config Section
+BOOL_MENUCOMPLETE=FALSE
+##KEYMAP Section
+while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+    if [[ $BOOL_AUTOINST == FALSE ]]; then
+        clear
+        echo What keymap do you want (DEFAULT=us):
+        read -p "Keymap:" KEYMAP
+        if [[ $KEYMAP == ]]; then
+            KEYMAP=us
+        fi
+        BOOL_MENUCOMPLETE=TRUE
+    else
+        BOOL_MENUCOMPLETE=TRUE
+    fi
+done
+
+if [[ $BOOL_AUTOINST == FALSE ]]; then
+    BOOL_MENUCOMPLETE=FALSE
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        echo What editor do you want as default?
+        read -p "Editor:" EDITOR
+        if [[ $EDITOR == emacs ]]; then
+            EMAC=emacs
+            BOOL_MENUCOMPLETE=TRUE
+        elif [[ $EDITOR == vim ]]; then
+            VIM=vim
+            BOOL_MENUCOMPLETE=TRUE
+        elif [[ $EDITOR == zile ]]; then
+            ZILE=zile
+            BOOL_MENUCOMPLETE=TRUE
+        elif [[ $EDITOR == nano ]]; then
+        BOOL_MENUCOMPLETE=TRUE
+        elif [[ $EDITOR == vi ]]; then
+        BOOL_MENUCOMPLETE=TRUE
+        else
+        echo Please enter a valid answer
+        read
+        fi
+    done
+fi
+package_install() "$EDITOR"
+
+####No Mirror Conf Yet
+#if [[ $BOOL_AUTOINST == FALSE ]]; then
+#    BOOL_MENUCOMPLETE=FALSE
+#    while [[ $BOOl_MENUCOMPLETE == FALSE ]]; do
+#        
+#    done
+#fi
+
+
+##Choose Device
+if [[ $BOOL_AUTOINST == FALSE ]]; then
+    BOOL_MENUCOMPLETE=FALSE
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; then
+        clear
+        echo Showing all Devices
+        lsblk
+        echo Ending showing all devices
+        echo --------------------------
+        echo What device (hard drive letter a = disk 0) do you want to install to?
+        read DEVICE
+        if [[ $DEVICE == "/dev/sd"* ]]; then
+            BOOL_MENUCOMPLETE=TRUE
+        else
+            echo Please enter a valid answer
+            read
+        fi
+    done
+fi
+
+##Choose Partition
+if [[ $BOOL_AUTOINST == FALSE ]]; then
+  BOOL_MENUCOMPLETE=FALSE  
+fi
+####Config End
