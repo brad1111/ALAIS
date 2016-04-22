@@ -64,6 +64,8 @@ while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
     fi
 done
 
+loadkeys $KEYMAP
+
 if [[ $BOOL_AUTOINST == FALSE ]]; then
     BOOL_MENUCOMPLETE=FALSE
     while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
@@ -164,6 +166,7 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
 #  done
 #fi
 
+##SetFstab
 if [[ $BOOL_AUTOINST == FALSE ]]; then
     if [[ -n $(dmidecode --type 1 | grep VirtualBox) ]]; then
         LTS=TRUE
@@ -176,4 +179,280 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
         FSTABTYPE=UUID
     fi
 fi
+
+##Language
+if [[ $BOOL_AUTOINST == FALSE ]]; then
+    BOOL_MENUCOMPLETE=FALSE
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        echo What language do you want (e.g. en_US or en_GB)
+        read language
+        if [[ language == *"_"* ]]; then
+            BOOL_MENUCOMPLETE=TRUE
+        else
+            echo Please enter a valid language code
+            read
+        fi
+    done
+fi
+
+##Timezone
+if [[ $BOOL_AUTOINST == FALSE ]]; then
+    BOOL_MENUCOMPLETE=FALSE
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        echo What timezone do you want (e.g. Europe/London, US/Pacific or UTC)
+        read timezone
+        if [[ timezone == */* ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == UTC ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == CET ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == CST6CDT ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Cuba ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == EET ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Egypt ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Eire ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == EST ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == EST5EDT ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Factory ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == GB ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == GB-Eire ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == "GMT"* ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Greenwich ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Hongkong ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == HST ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Iceland ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Iran ]]; then BOOL_MENUCOMPLETE=TRUE
+        #elif [[ timezone == iso3166.tab ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Israel ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Jamaica ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Japan ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Kwajalein ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Libya ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == MET ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == "MST"* ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Navajo ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == NZ ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == NZ-CHAT ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Poland ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Portugal ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == posixrules ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == PRC ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == PSR8PDT ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == ROC ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == ROK ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Singapore ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Turkey ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == UCT ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Universal ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == W-SU ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ timezone == Zulu ]]; then BOOL_MENUCOMPLETE=TRUE
+        else
+            echo Please enter a valid timezone
+            read
+        fi
+    done
+fi
+
+##Set hardware-clock
+if [[ $BOOL_AUTOINST == FALSE ]]; then
+    BOOL_MENUCOMPLETE=FALSE
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        echo Please set the hardware clock (UTC or Localtime) (UTC Recommended, Localtime if dualbooting with Windows)
+        read hwclockvar
+        if [[ $hwclockvar == UTC ]]; then BOOL_MENUCOMPLETE=FALSE
+        elif [[ $hwclockvar == Localtime ]]; then BOOL_MENUCOMPLETE=False
+        else
+            echo Please enter a valid hwclock value
+            read
+        fi
+    done
+fi
+
+##Hostname
+if [[ $BOOL_AUTOINST == FALSE ]]; then
+    BOOL_MENUCOMPLETE=FALSE
+    while [[ $BOOl_MENUCOMPLETE == FALSE ]]; do
+        clear
+        echo Please set the hostname for your new system
+        read hostname
+        break
+    done
+fi
+
+##Network manager thing
+if [[ $BOOL_AUTOINST == FALSE ]]; then
+    BOOL_MENUCOMPLETE=FALSE
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        echo Please set your network manager (Networkmanager, Connman, or Wicd)
+        read networkman
+        if [[ $networkman == Networkmanager ]]; then break
+        elif [[ $networkman == ConnMan ]]; then break
+        elif [[ $networkman == wicd ]]; then break
+        else
+            echo Please enter a valid network manager
+            read
+        fi
+    done
+fi
+
+##Password (PLEASE BE TEMPORARY) For now
+if [[ $BOOL_AUTOINST == FALSE ]]; then
+    BOOL_MENUCOMPLETE=FALSE
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        echo Please enter a TEMPORARY password that you will change later whilst you are logged in (this is because it is insecure)
+        read password
+        break
+    done
+fi
+
+##Post Config Wizard
+PConfWiz()
+{
+    #BasicSetup
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        local basicsetupYN
+        echo Do you want basic setup (bc, rsync, mlocate bash-completeion pkgstats, ntp, avahi, alsa, pulseaudio, file systems) [Y/N]
+        read basicsetup
+        if [[ $basicsetup == Y ]]; then
+            BOOL_BASICSETUP=TRUE
+            break
+        elif [[ $basicsetup == N ]]; then
+            BOOL_BASICSETUP=FALSE
+            break
+        else
+            echo Please enter a valid answer [Y/N]
+            read
+        fi
+    done
+    #SSH
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        local sshYN
+        echo Do you want SSH? [Y/N]
+        read sshYN
+        if [[ sshYN == Y ]]; then
+            BOOL_SSH=TRUE
+            break
+        elif [[ sshYN == N ]]; then
+            BOOL_SSH=FALSE
+            break
+        else
+            echo Please enter a valid answer [Y/N]
+            read
+        fi
+    done
+    #NFS
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        local nfsYN
+        echo Do you want NFS? [Y/N]
+        read nfsYN
+        if [[ nfsYN == Y ]]; then
+            BOOL_NFS=TRUE
+            break
+        elif [[ nfsYN == N ]]; then
+            BOOL_NFS=FALSE
+            break
+        else
+            echo Please enter a valid answer [Y/N]
+            read
+        fi
+    done
+    #Samba
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        local sambaYN
+        echo Do you want Samba? [Y/N]
+        read sambaYN
+        if [[ sambaYN == Y ]]; then
+            BOOL_SAMBA=TRUE
+            break
+        elif [[ sambaYN == N ]]; then
+            BOOL_SAMBA=FALSE
+            break
+        else
+            echo Please enter a valid answer [Y/N]
+            read
+        fi
+    done
+    #Readahead
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        local readaheadYN
+        echo Do you want Readahead? [Y/N]
+        read readaheadYN
+        if [[ readaheadYN == Y ]]; then
+            BOOL_READAHEAD=TRUE
+            break
+        elif [[ readaheadYN == N ]]; then
+            BOOL_READAHEAD=FALSE
+            break
+        else
+            echo Please enter a valid answer [Y/N]
+            read
+        fi
+    done
+    #Fontconfig
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        local fontconfigOPTION
+        echo What fontconfig [Normal, Infinality, Ubuntu] [1,2,3]
+        read fontconfigOPTION
+        if [[ fontconfigOPTION == 1 ]]; then
+            BOOL_FONTCONFIG=NORM
+            break
+        elif [[ fontconfigOPTION == 2 ]]; then
+            BOOL_FONTCONFIG=INF
+            break
+        elif [[ fontconfigOPTION == 3 ]]; then
+            BOOL_FONTCONFIG=UBUNTU
+            break
+        else
+            echo Please enter a valid answer [Y/N]
+            read
+        fi
+    done
+    #XORG
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        local xorgYN
+        echo Do you want XORG? [Y/N]
+        read xorgYN
+        if [[ xorgYN == Y ]]; then
+            BOOL_XORG=TRUE
+            break
+        elif [[ xorgYN == N ]]; then
+            BOOL_XORG=FALSE
+            break
+        else
+            echo Please enter a valid answer [Y/N]
+            read
+        fi
+    done
+    
+}
+
+##Post config
+if [[ $BOOL_AUTOINST == FALSE ]]; then
+    BOOL_MENUCOMPLETE=FALSE
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        echo Do you want to use a wizard to setup post-install, or just choose the applications? [Y/N]
+        read temp_postconfig
+        if [[ $temp_postconfig == Y ]]; then
+            PConfWiz
+            break
+        elif [[ $temp_postconfig == N ]]; then
+            break
+        else
+            echo Please enter a valid answer [Y/N]
+            read
+        fi
+    done
+fi
+
 ####Config End
