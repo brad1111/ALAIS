@@ -155,49 +155,7 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
     done
  fi
  
- ######################Move ME!
-# DEVICE_PARTITION_TABLE=NULL
-# DEVICE_ESP=
-# DEVICE_SWAP=
-# DEVICE_ROOT=
-# if [[ $BOOL_AUTOINST == FALSE ]]; then; partitioner=parted; fi
-# partition_man()
-# {
-#     if [[ partitioner == parted ]]; then
-#         if [[ %1 == mbr ]]; then
-#             parted mklabel msdos
-#             DEVICE_PARTITION_TABLE=msdos
-#         elif [[ %1 == gpt ]]; then
-#             parted mklabel gpt
-#             DEVICE_PARTITION_TABLE=gpt
-#         elif [[ %1 == esp ]]; then
-#             parted mkpart primary fat32 512MB
-#             DEVICE_ESP=/dev/sd{$device}1
-#         elif [[ %1 == swap ]]; then
-#             parted mkpart primary linux-swap $TOTAL_RAM
-#             if [[ $DEVICE_ESP ]]; then; DEVICE_SWAP=/dev/sd{$device}1; else; DEVICE_SWAP=/dev/sd{$device}2; fi
-#         elif [[ %1 == root ]]; then
-#             parted mkpart primary ext4 100%
-#             if [[ $DEVICE_SWAP == /dev/sd{$device}1 ]]; then; DEVICE_ROOT=/dev/sd{$device}2; elif [[ $DEVICE_SWAP == /dev/sd{$device}2 ]]; then; DEVICE_ROOT=/dev/sd{$device}3; else; echo An Error occured partitioning Root; read; exit 1; fi
-#         fi
-#     fi
-# }
-# 
 
-##Choose Partition
-#if [[ $BOOL_AUTOINST == FALSE ]]; then
-#  BOOL_MENUCOMPLETE=FALSE 
-#  while [[ $BOOL_MENUCOMPLETE == FALSE ]]; then
-#        clear
-#        ###UEFI Partition
-#        if [[ UEFI == 1 ]]; then
-#            partition_man "esp"
-#       fi
-#        partition_man "swap"
-#        partition_man "root"
-#        
-#  done
-#fi
 
 ##SetFstab
 if [[ $BOOL_AUTOINST == FALSE ]]; then
@@ -588,7 +546,7 @@ PConfWiz()
     elif [[ $DESKTOP_ENV == ""]]; then #NO DESKTOP ENVIRONMENT
         DISPLAY_MAN=
     else
-        DISPLAY_MAN=lightdm
+        DISPLAY_MAN=lightdm lightdm-gtk-greeter
     fi
     
 
@@ -686,3 +644,74 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
 fi
 
 ####Config End
+####Installation Start
+DEVICE_PARTITION_TABLE=NULL
+DEVICE_ESP=
+DEVICE_SWAP=
+DEVICE_ROOT=
+if [[ $BOOL_AUTOINST == FALSE ]]; then; partitioner=parted; fi
+partition_man()
+{
+    if [[ partitioner == parted ]]; then
+        if [[ %1 == mbr ]]; then
+            parted mklabel msdos
+            DEVICE_PARTITION_TABLE=msdos
+            
+        elif [[ %1 == gpt ]]; then
+            parted mklabel gpt
+            DEVICE_PARTITION_TABLE=gpt
+        elif [[ %1 == esp ]]; then
+            parted mkpart primary fat32 512MB
+            DEVICE_ESP=/dev/sd{$device}1
+        elif [[ %1 == swap ]]; then
+            parted mkpart primary linux-swap $TOTAL_RAM
+            if [[ $DEVICE_ESP ]]; then; DEVICE_SWAP=/dev/sd{$device}1; else; DEVICE_SWAP=/dev/sd{$device}2; fi
+        elif [[ %1 == root ]]; then
+            parted mkpart primary ext4 100%
+            if [[ $DEVICE_SWAP == /dev/sd{$device}1 ]]; then; DEVICE_ROOT=/dev/sd{$device}2; elif [[ $DEVICE_SWAP == /dev/sd{$device}2 ]]; then; DEVICE_ROOT=/dev/sd{$device}3; else; echo An Error occured partitioning Root; read; exit 1; fi
+            if [[ $DEVICE_PARTITION_TABLE == msdos] && [ $UEFI == 0]]; then
+                parted set $DEVICE_ROOT boot on
+            fi
+        fi
+    fi
+}
+
+
+#Choose Partition ##NO current support for BIOS/gpt + grub
+#if [[ $BOOL_AUTOINST == FALSE ]]; then
+ BOOL_MENUCOMPLETE=FALSE 
+ while [[ $BOOL_MENUCOMPLETE == FALSE ]]; then
+       clear
+       ###Later enable BIOS boot partition etc
+       ###UEFI Partition
+        if [[ UEFI == 1 ]]; then
+           partition_man "gpt"
+           partition_man "esp"
+        else
+           partition_man "msdos"
+        fi
+       partition_man "swap"
+       partition_man "root"
+       break
+ done
+#fi
+
+##Create partitions
+mkswap $DEVICE_SWAP
+swapon $DEVICE_SWAP
+mkfs.fat -F32 $DEVICE_ESP
+mkfs.ext4 $DEVICE_ROOT
+
+mount $DEVICE_ROOT /mnt
+mkdir /mnt/boot
+mount $DEVICE_ESP /mnt/boot
+
+pacstraptodo="base base-devel $networkman grub os-prober efibootmgr dosfstools"
+if [[ $LTS == TRUE ]]; then
+    pacstraptodo="$pacstraptodo linux-lts linux-lts-dkms"
+else
+    pacstraptodo="$pacstraptodo linux-dkms"
+fi
+
+if [[ ! $language == en_US ]]; then echo $language.UTF-8 UTF-8 >> /mnt/etc/locale.gen; fi
+echo en_US.UTF-8
