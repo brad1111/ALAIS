@@ -623,6 +623,26 @@ PConfWiz()
     
     while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
         clear
+        local plymouthYN
+        echo Do you want to install Plymouth? (A boot-screen/boot-splash) [Y/N]
+        read plymouthYN
+        if [[ plymouthYN == Y ]]; then
+            BOOL_PLYMOUTH=TRUE
+            PLYMOUTH_THEME=SPINFINITY
+            PLYMOUTH_VARIANT=-legacy
+            break
+        elif [[ plymouthYN == N ]]; then
+            BOOL_PLYMOUTH=FALSE
+            break
+        else
+            echo Please enter a valid answer
+            read
+        fi
+    done
+    
+    
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
         local MorePKGSYN
         echo Do you want to add more packages after install? [Y/N]
         read MorePKGSYN
@@ -634,7 +654,15 @@ PConfWiz()
 #Same as above but w/o wizard
 PConfPKGS
 {
-
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        CUSTOMPKGS=
+        AURCUSTOMPKGS=
+        echo What applications do you want to install (e.g. application1 application2 etc.) [PACMAN]
+        read CUSTOMPKGS
+        echo What applications do you want to install (e.g. application application etc.) [AUR]
+        read AURCUSTOMPKGS
+    done
 }
 
 
