@@ -43,6 +43,39 @@ if check_connection(); then
     exit 1
 fi
 
+##Copied from helmuthdu/aui (GPL 3.0)
+    check_vga()
+    {
+        if [[ -n $(dmidecode --type 1 | grep VirtualBox) ]]; then
+      cecho Virtualbox
+      VIDEO_DRIVER="virtualbox"
+    elif [[ $_vga_length -eq 2 ]] && [[ -n $(echo ${_vga} | grep "nvidia") || -f /sys/kernel/debug/dri/0/vbios.rom ]]; then
+      cecho Bumblebee
+      VIDEO_DRIVER="bumblebee"
+    elif [[ -n $(echo ${_vga} | grep "nvidia") || -f /sys/kernel/debug/dri/0/vbios.rom ]]; then
+      cecho Nvidia
+      read_input_text "Install NVIDIA proprietary driver" $PROPRIETARY_DRIVER
+      if [[ $OPTION == y ]]; then
+        VIDEO_DRIVER="nvidia"
+      else
+        VIDEO_DRIVER="nouveau"
+      fi
+    elif [[ -n $(echo ${_vga} | grep "advanced micro devices") || -f /sys/kernel/debug/dri/0/radeon_pm_info || -f /sys/kernel/debug/dri/0/radeon_sa_info ]]; then
+      cecho AMD/ATI
+      VIDEO_DRIVER="ati"
+    elif [[ -n $(echo ${_vga} | grep "intel corporation") || -f /sys/kernel/debug/dri/0/i915_capabilities ]]; then
+      cecho Intel
+      VIDEO_DRIVER="intel"
+    #Open-VM-Tools support by Thebradad1111 (Checks for VMWare drivers)
+    elif [[ -n $(dmidecode --type 1 | grep VMware) ]]; then
+      cecho VMware
+      VIDEO_DRIVER="openvmware"
+    else
+      cecho VESA
+      VIDEO_DRIVER="vesa"
+    fi
+    }##End of copied from aui
+
 BOOL_AUTOINST=FALSE
 if [[ -f `pwd`/autoinstall ]]; then #Checks for AutoInstall script for arch linux
     source autoinstall
@@ -55,7 +88,7 @@ while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
         clear
         echo What keymap do you want (DEFAULT=us):
         read -p "Keymap:" KEYMAP
-        if [[ $KEYMAP == ]]; then
+        if [[ $KEYMAP == "" ]]; then
             KEYMAP=us
         fi
         BOOL_MENUCOMPLETE=TRUE
@@ -173,7 +206,7 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
     elif [[ -n $(dmidecode --type 1 | grep VMware) ]]; then
         LTS=TRUE
     fi
-    if [[ !UEFI ]]; then
+    if [[ UEFI == 0 ]]; then
         FSTABTYPE=PARTUUID
     else
         FSTABTYPE=UUID
@@ -308,6 +341,24 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
     done
 fi
 
+
+##Octopi Setup for POST Config Wizard
+Octopi()
+{
+    clear
+    echo Do you want to install octopi (pacman in gui form made in qt) [Y/N]?
+    local octopiYN
+    read octopiYN
+    if [[ $octopiYN == Y ]]; then
+        BOOL_OCTOPI=TRUE
+    elif [[ $octopiYN == N ]]; then
+        BOOL_OCTOPI=FALSE
+    else
+        echo Please enter a valid answer
+        read
+    fi
+}
+
 ##Post Config Wizard
 PConfWiz()
 {
@@ -420,7 +471,7 @@ PConfWiz()
     while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
         clear
         local xorgYN
-        echo Do you want XORG? [Y/N]
+        echo Do you want XORG (required for a gui)? [Y/N]
         read xorgYN
         if [[ xorgYN == Y ]]; then
             BOOL_XORG=TRUE
@@ -433,8 +484,159 @@ PConfWiz()
             read
         fi
     done
+    check_vga
+    ##CUPS
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        local cupsYN
+        echo Do you want CUPS (printing support)?
+        read cupsYN
+        if [[ cupsYN == Y ]]; then
+            BOOL_CUPS=TRUE
+            break
+        elif [[ cupsYN == N ]]; then
+            BOOL_CUPS=FALSE
+            break
+        else
+            echo Please enter a valid answer [Y/N]
+            read
+        fi
+    done
+    ##WM/DE
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        if [[ $BOOL_XORG == TRUE ]]; then
+            clear
+            local deYN
+            echo Do you want a desktop enironment/window manager (gnome, kde etc./openbox, i3 etc.)
+            read deYN
+            if [[ deYN == Y ]]; then
+                local BOOL_2NDMENUCOMPLETE=FALSE
+                while [[ $BOOL_2NDMENUCOMPLETE == FALSE ]]; do
+                    clear
+                    echo Please select a desktop environment or window manager
+                    echo -----------------------------------------------------
+                    echo Desktop Environment:   Window Manager:
+                    echo 1. Cinnamon            9. Awesome
+                    echo 2. Enlightenment       10. Fluxbox
+                    echo 3. GNOME               11. i3
+                    echo 4. KDE                 12. OpenBox
+                    echo 5. LXDE                13. Xmonad
+                    echo 6. LXQT
+                    echo 7. MATE
+                    echo 8. XFCE
+                    echo -----------------------------------------------------
+                    echo Please select a number from 1-13:
+                    local wm
+                    read wm
+                    if [[ wm == 1]]; then
+                        DESKTOP_ENV=Cinnamon
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    elif [[ wm == 2 ]]; then
+                        DESKTOP_ENV=Enlightenment
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    elif [[ wm == 3 ]]; then
+                        DESKTOP_ENV=GNOME
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    elif [[ wm == 4 ]]; then
+                        DESKTOP_ENV=KDE
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    elif [[ wm == 5 ]]; then
+                        DESKTOP_ENV=LXDE
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    elif [[ wm == 6 ]]; then
+                        DESKTOP_ENV=LXQT
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    elif [[ wm == 7 ]]; then
+                        DESKTOP_ENV=MATE
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    elif [[ wm == 8 ]]; then
+                        DESKTOP_ENV=XFCE
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    elif [[ wm == 9 ]]; then
+                        DESKTOP_ENV=Awesome
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    elif [[ wm == 10 ]]; then
+                        DESKTOP_ENV=Fluxbox
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    elif [[ wm == 11 ]]; then
+                        DESKTOP_ENV=i3
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    elif [[ wm == 12 ]]; then
+                        DESKTOP_ENV=Openbox
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    elif [[ wm == 13 ]]; then
+                        DESKTOP_ENV=Xmonad
+                        BOOL_2NDMENUCOMPLETE=TRUE
+                    else
+                        echo Please enter a valid number [1-13]
+                        read
+                    fi
+                done
+                break
+            elif [[ deYN == N ]]; then
+                break
+            fi
+        else
+            break
+        fi
+    done
+    ##Todo add different DM support
+    if [[ $DESKTOP_ENV == KDE ]]; then
+        DISPLAY_MAN=lightdm lightdm-kde-greeter
+    elif [[ $DESKTOP_ENV == LXQT ]]; then
+        DISPLAY_MAN=lightdm lightdm-kde-greeter
+    elif [[ $DESKTOP_ENV == ""]]; then #NO DESKTOP ENVIRONMENT
+        DISPLAY_MAN=
+    else
+        DISPLAY_MAN=lightdm
+    fi
     
+
+
+    
+    
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        if [[ $DESKTOP_ENV == "" ]]; then
+            break
+        elif [[ $DESKTOP_ENV == KDE ] || [ $DESKTOP_ENV == LXQT ]]; then
+            octopi
+            if [[ $BOOL_OCTOPI == TRUE] || [ $BOOL_OCTOPI == FALSE ]]; then
+                break
+            fi
+        else
+            clear
+            echo Do you want to install pacman (pacman in gui form made in gtk+/vala) [Y/N]?
+            local pamacYN
+            read pamacYN
+            if [[ $pamacYN == Y ]]; then
+                BOOL_PAMAC=TRUE
+                break
+            elif [[ $pamacYN == N ]]; then
+                BOOL_PAMAC=FALSE
+                break
+            else
+                echo Please enter a valid answer
+                read
+            fi
+        fi
+    done
+    
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+        clear
+        local MorePKGSYN
+        echo Do you want to add more packages after install? [Y/N]
+        read MorePKGSYN
+        if [[ $MorePKGSYN == TRUE ]]; then
+            PConfPKGS
+        fi
+    done
 }
+#Same as above but w/o wizard
+PConfPKGS
+{
+
+}
+
 
 ##Post config
 if [[ $BOOL_AUTOINST == FALSE ]]; then
