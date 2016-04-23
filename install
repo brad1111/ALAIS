@@ -713,5 +713,49 @@ else
     pacstraptodo="$pacstraptodo linux-dkms"
 fi
 
+pacstrap /mnt $pacstraptodo
+
+
 if [[ ! $language == en_US ]]; then echo $language.UTF-8 UTF-8 >> /mnt/etc/locale.gen; fi
-echo en_US.UTF-8
+echo en_US.UTF-8 UTF-8 >> /mnt/etc/locale.gen
+
+arch-chroot /mnt locale-gen
+
+echo LANG=$language > /mnt/etc/locale.conf
+echo KEYMAP=$keymap > /mnt/etc/vconsole.conf
+
+arch-chroot /mnt ln -s /usr/share/zoneinfo/$timezone /etc/localtime
+arch-chroot /mnt hwclock --$hwclockvar --systohc
+
+echo $hostname > /mnt/etc/hostname
+arch-chroot /mnt sed -i '/127.0.0.1/s/$/ '${host_name}'/' /etc/hosts
+arch-chroot /mnt sed -i '/::1/s/$/ '${host_name}'/' /etc/hosts
+
+if [[ $LTS == TRUE ]]; then
+    arch-chroot /mnt pacman -Rs --noconfirm linux
+    arch-chroot /mnt mkinitcpio -p linux-lts
+else
+    arch-chroot /mnt mkinitcpio -p linux
+fi
+
+if [[ $UEFI == 1 ]]; then
+    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=arch-linux
+else
+    arch-chroot /mnt grub-install --target=i386-pc $device
+fi
+arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+arch-chroot /mnt passwd <<EOF
+"$password"
+"$password"
+EOF
+
+arch-chroot /mnt systemctl enable $networkman
+if [[ $DEVICE_ESP == "" ]]; then
+else
+    umount -R /mnt/boot
+fi
+umount -R /mnt
+swapoff $DEVICE_ROOT
+systemctl reboot
+##End of install
+##Todo add config stuff
