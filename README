@@ -3,3 +3,5 @@ This is an unfinished project based on some of the code of helmuthdu/aui and my 
 This is a WIP.
 It is designed to be combined with an autoinstall script that sets all of the variables up, so the user does not have to enter anything during arch installation.
 However it can be used like the helmuthdu/aui, but is designed to be much smaller and has a worse CLI (Command Line Interface) and is really only designed as a fallback in case the autoinstall script is missing.
+
+http://thebradad1111.github.io/ALAIS
