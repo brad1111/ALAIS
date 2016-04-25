@@ -106,6 +106,7 @@ while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
     else
         BOOL_MENUCOMPLETE=TRUE
     fi
+	break
 done
 
 loadkeys $KEYMAP
@@ -773,4 +774,3 @@ systemctl reboot
 ##End of install
 ##Todo add config stuff
 exit 1
-EOF
