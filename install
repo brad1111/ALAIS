@@ -263,10 +263,10 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
     BOOL_MENUCOMPLETE=FALSE
     while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
         clear
-        echo "Please set the hardware clock \(UTC or Localtime\) \(UTC Recommended, Localtime if dualbooting with Windows\)"
+        echo Please set the hardware clock \(UTC or Localtime\) \(UTC Recommended, Localtime if dualbooting with Windows\)
         read hwclockvar
-        if [[ $hwclockvar == UTC ]]; then BOOL_MENUCOMPLETE=FALSE
-        elif [[ $hwclockvar == Localtime ]]; then BOOL_MENUCOMPLETE=False
+        if [[ $hwclockvar == UTC ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $hwclockvar == Localtime ]]; then BOOL_MENUCOMPLETE=TRUE
         else
             echo Please enter a valid hwclock value
             read
