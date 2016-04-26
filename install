@@ -192,7 +192,7 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
         clear
         echo What language do you want \(e.g. en_US or en_GB\)
         read language
-        if [[ language == *"_"* ]]; then
+        if [[ $language == *"_"* ]]; then
             BOOL_MENUCOMPLETE=TRUE
         else
             echo Please enter a valid language code
@@ -208,49 +208,49 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
         clear
         echo What timezone do you want \(e.g. Europe/London, US/Pacific or UTC\)
         read timezone
-        if [[ timezone == */* ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == UTC ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == CET ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == CST6CDT ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Cuba ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == EET ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Egypt ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Eire ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == EST ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == EST5EDT ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Factory ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == GB ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == GB-Eire ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == "GMT"* ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Greenwich ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Hongkong ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == HST ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Iceland ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Iran ]]; then BOOL_MENUCOMPLETE=TRUE
-        #elif [[ timezone == iso3166.tab ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Israel ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Jamaica ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Japan ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Kwajalein ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Libya ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == MET ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == "MST"* ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Navajo ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == NZ ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == NZ-CHAT ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Poland ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Portugal ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == posixrules ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == PRC ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == PSR8PDT ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == ROC ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == ROK ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Singapore ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Turkey ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == UCT ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Universal ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == W-SU ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ timezone == Zulu ]]; then BOOL_MENUCOMPLETE=TRUE
+        if [[ $timezone == */* ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == UTC ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == CET ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == CST6CDT ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Cuba ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == EET ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Egypt ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Eire ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == EST ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == EST5EDT ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Factory ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == GB ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == GB-Eire ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == "GMT"* ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Greenwich ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Hongkong ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == HST ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Iceland ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Iran ]]; then BOOL_MENUCOMPLETE=TRUE
+        #elif [[ $timezone == iso3166.tab ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Israel ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Jamaica ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Japan ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Kwajalein ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Libya ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == MET ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == "MST"* ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Navajo ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == NZ ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == NZ-CHAT ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Poland ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Portugal ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == posixrules ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == PRC ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == PSR8PDT ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == ROC ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == ROK ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Singapore ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Turkey ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == UCT ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Universal ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == W-SU ]]; then BOOL_MENUCOMPLETE=TRUE
+        elif [[ $timezone == Zulu ]]; then BOOL_MENUCOMPLETE=TRUE
         else
             echo Please enter a valid timezone
             read
@@ -277,7 +277,7 @@ fi
 ##Hostname
 if [[ $BOOL_AUTOINST == FALSE ]]; then
     BOOL_MENUCOMPLETE=FALSE
-    while [[ $BOOl_MENUCOMPLETE == FALSE ]]; do
+    while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
         clear
         echo Please set the hostname for your new system
         read hostname
@@ -357,10 +357,10 @@ PConfWiz()
         local sshYN
         echo Do you want SSH? \[Y/N\]
         read sshYN
-        if [[ sshYN == Y ]]; then
+        if [[ $sshYN == Y ]]; then
             BOOL_SSH=TRUE
             break
-        elif [[ sshYN == N ]]; then
+        elif [[ $sshYN == N ]]; then
             BOOL_SSH=FALSE
             break
         else
@@ -374,10 +374,10 @@ PConfWiz()
         local nfsYN
         echo Do you want NFS? \[Y/N\]
         read nfsYN
-        if [[ nfsYN == Y ]]; then
+        if [[ $nfsYN == Y ]]; then
             BOOL_NFS=TRUE
             break
-        elif [[ nfsYN == N ]]; then
+        elif [[ $nfsYN == N ]]; then
             BOOL_NFS=FALSE
             break
         else
@@ -391,10 +391,10 @@ PConfWiz()
         local sambaYN
         echo Do you want Samba? \[Y/N\]
         read sambaYN
-        if [[ sambaYN == Y ]]; then
+        if [[ $sambaYN == Y ]]; then
             BOOL_SAMBA=TRUE
             break
-        elif [[ sambaYN == N ]]; then
+        elif [[ $sambaYN == N ]]; then
             BOOL_SAMBA=FALSE
             break
         else
@@ -408,10 +408,10 @@ PConfWiz()
         local readaheadYN
         echo Do you want Readahead? \[Y/N\]
         read readaheadYN
-        if [[ readaheadYN == Y ]]; then
+        if [[ $readaheadYN == Y ]]; then
             BOOL_READAHEAD=TRUE
             break
-        elif [[ readaheadYN == N ]]; then
+        elif [[ $readaheadYN == N ]]; then
             BOOL_READAHEAD=FALSE
             break
         else
@@ -425,13 +425,13 @@ PConfWiz()
         local fontconfigOPTION
         echo What fontconfig \[Normal, Infinality, Ubuntu\] \[1,2,3\]
         read fontconfigOPTION
-        if [[ fontconfigOPTION == 1 ]]; then
+        if [[ $fontconfigOPTION == 1 ]]; then
             BOOL_FONTCONFIG=NORM
             break
-        elif [[ fontconfigOPTION == 2 ]]; then
+        elif [[ $fontconfigOPTION == 2 ]]; then
             BOOL_FONTCONFIG=INF
             break
-        elif [[ fontconfigOPTION == 3 ]]; then
+        elif [[ $fontconfigOPTION == 3 ]]; then
             BOOL_FONTCONFIG=UBUNTU
             break
         else
@@ -445,10 +445,10 @@ PConfWiz()
         local xorgYN
         echo Do you want XORG \(required for a gui\)? \[Y/N\]
         read xorgYN
-        if [[ xorgYN == Y ]]; then
+        if [[ $xorgYN == Y ]]; then
             BOOL_XORG=TRUE
             break
-        elif [[ xorgYN == N ]]; then
+        elif [[ $xorgYN == N ]]; then
             BOOL_XORG=FALSE
             break
         else
@@ -463,10 +463,10 @@ PConfWiz()
         local cupsYN
         echo Do you want CUPS \(printing support\)?
         read cupsYN
-        if [[ cupsYN == Y ]]; then
+        if [[ $cupsYN == Y ]]; then
             BOOL_CUPS=TRUE
             break
-        elif [[ cupsYN == N ]]; then
+        elif [[ $cupsYN == N ]]; then
             BOOL_CUPS=FALSE
             break
         else
@@ -500,43 +500,43 @@ PConfWiz()
                     echo Please select a number from 1-13:
                     local wm
                     read wm
-                    if [[ wm == 1 ]]; then
+                    if [[ $wm == 1 ]]; then
                         DESKTOP_ENV=Cinnamon
                         BOOL_2NDMENUCOMPLETE=TRUE
-                    elif [[ wm == 2 ]]; then
+                    elif [[ $wm == 2 ]]; then
                         DESKTOP_ENV=Enlightenment
                         BOOL_2NDMENUCOMPLETE=TRUE
-                    elif [[ wm == 3 ]]; then
+                    elif [[ $wm == 3 ]]; then
                         DESKTOP_ENV=GNOME
                         BOOL_2NDMENUCOMPLETE=TRUE
-                    elif [[ wm == 4 ]]; then
+                    elif [[ $wm == 4 ]]; then
                         DESKTOP_ENV=KDE
                         BOOL_2NDMENUCOMPLETE=TRUE
-                    elif [[ wm == 5 ]]; then
+                    elif [[ $wm == 5 ]]; then
                         DESKTOP_ENV=LXDE
                         BOOL_2NDMENUCOMPLETE=TRUE
-                    elif [[ wm == 6 ]]; then
+                    elif [[ $wm == 6 ]]; then
                         DESKTOP_ENV=LXQT
                         BOOL_2NDMENUCOMPLETE=TRUE
-                    elif [[ wm == 7 ]]; then
+                    elif [[ $wm == 7 ]]; then
                         DESKTOP_ENV=MATE
                         BOOL_2NDMENUCOMPLETE=TRUE
-                    elif [[ wm == 8 ]]; then
+                    elif [[ $wm == 8 ]]; then
                         DESKTOP_ENV=XFCE
                         BOOL_2NDMENUCOMPLETE=TRUE
-                    elif [[ wm == 9 ]]; then
+                    elif [[ $wm == 9 ]]; then
                         DESKTOP_ENV=Awesome
                         BOOL_2NDMENUCOMPLETE=TRUE
-                    elif [[ wm == 10 ]]; then
+                    elif [[ $wm == 10 ]]; then
                         DESKTOP_ENV=Fluxbox
                         BOOL_2NDMENUCOMPLETE=TRUE
-                    elif [[ wm == 11 ]]; then
+                    elif [[ $wm == 11 ]]; then
                         DESKTOP_ENV=i3
                         BOOL_2NDMENUCOMPLETE=TRUE
-                    elif [[ wm == 12 ]]; then
+                    elif [[ $wm == 12 ]]; then
                         DESKTOP_ENV=Openbox
                         BOOL_2NDMENUCOMPLETE=TRUE
-                    elif [[ wm == 13 ]]; then
+                    elif [[ $wm == 13 ]]; then
                         DESKTOP_ENV=Xmonad
                         BOOL_2NDMENUCOMPLETE=TRUE
                     else
@@ -598,12 +598,12 @@ PConfWiz()
         local plymouthYN
         echo Do you want to install Plymouth? \(A boot-screen/boot-splash\) \[Y/N\]
         read plymouthYN
-        if [[ plymouthYN == Y ]]; then
+        if [[ $plymouthYN == Y ]]; then
             BOOL_PLYMOUTH=TRUE
             PLYMOUTH_THEME=SPINFINITY
             PLYMOUTH_VARIANT=-legacy
             break
-        elif [[ plymouthYN == N ]]; then
+        elif [[ $plymouthYN == N ]]; then
             BOOL_PLYMOUTH=FALSE
             break
         else
@@ -666,7 +666,7 @@ DEVICE_ROOT=
 if [[ $BOOL_AUTOINST == FALSE ]]; then partitioner=parted; fi
 partition_man()
 {
-    if [[ partitioner == parted ]]; then
+    if [[ $partitioner == parted ]]; then
         if [[ %1 == mbr ]]; then
             parted mklabel msdos
             DEVICE_PARTITION_TABLE=msdos
@@ -698,7 +698,7 @@ partition_man()
        clear
        ###Later enable BIOS boot partition etc
        ###UEFI Partition
-        if [[ UEFI == 1 ]]; then
+        if [[ $UEFI == 1 ]]; then
            partition_man "gpt"
            partition_man "esp"
         else
