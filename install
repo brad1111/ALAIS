@@ -668,7 +668,7 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then partitioner=parted; fi
 partition_man()
 {
     if [[ $partitioner == parted ]]; then
-        if [[ %1 == mbr ]]; then
+        if [[ %1 == msdos ]]; then
             parted $DEVICE mklabel msdos
             DEVICE_PARTITION_TABLE=msdos
             
@@ -676,16 +676,16 @@ partition_man()
             parted $DEVICE mklabel gpt
             DEVICE_PARTITION_TABLE=gpt
         elif [[ %1 == esp ]]; then
-            parted $DEVICE mkpart primary fat32 512MB
-            DEVICE_ESP=/dev/sd{$device}1
+            parted $DEVICE mkpart primary fat32 2M 512M
+            DEVICE_ESP={$DEVICE}1
         elif [[ %1 == swap ]]; then
-            parted $DEVICE mkpart primary linux-swap $TOTAL_RAM
-            if [[ $DEVICE_ESP ]]; then DEVICE_SWAP=/dev/sd{$device}1; else DEVICE_SWAP=/dev/sd{$device}2; fi
+            parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM
+            if [[ $DEVICE_ESP == "" ]]; then DEVICE_SWAP={$DEVICE}1; else DEVICE_SWAP={$DEVICE}2; fi
         elif [[ %1 == root ]]; then
             parted $DEVICE mkpart primary ext4 100%
-            if [[ $DEVICE_SWAP == /dev/sd{$device}1 ]]; then DEVICE_ROOT=/dev/sd{$device}2; elif [[ $DEVICE_SWAP == /dev/sd{$device}2 ]]; then DEVICE_ROOT=/dev/sd{$device}3; else echo An Error occured partitioning Root; read; exit 1; fi
+            if [[ $DEVICE_SWAP == {$DEVICE}1 ]]; then DEVICE_ROOT={$DEVICE}2; elif [[ $DEVICE_SWAP == {$DEVICE}2 ]]; then DEVICE_ROOT={$DEVICE}3; else echo An Error occured partitioning Root; read; exit 1; fi
             if [[ $DEVICE_PARTITION_TABLE == msdos ]] && [[ $UEFI == 0 ]]; then
-                parted $DEVICE set $DEVICE_ROOT boot on #MBR BOOTABLE PARITITON
+                parted $DEVICE set 2 boot on #MBR BOOTABLE PARITITON
             fi
         fi
     fi
