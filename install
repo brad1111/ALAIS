@@ -293,8 +293,11 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
         echo Please set your network manager \(Networkmanager, Connman, or Wicd\)
         read networkman
         if [[ $networkman == Networkmanager ]]; then break
+        $networkman=networkmanager
         elif [[ $networkman == ConnMan ]]; then break
-        elif [[ $networkman == wicd ]]; then break
+        $networkman=connman
+        elif [[ $networkman == Wicd ]]; then break
+        $networkman=wicd
         else
             echo Please enter a valid network manager
             read
@@ -712,10 +715,10 @@ fi
 # #fi
 
 if [[ $UEFI == 1 ]]; then
-  parted $DEVICE mklabel gpt
-  DEVICE_PARTITION_TABLE=gpt
-  parted $DEVICE mkpart primary fat32 2M 512M
-  DEVICE_ESP=${DEVICE}1
+    parted $DEVICE mklabel gpt
+    DEVICE_PARTITION_TABLE=gpt
+    parted $DEVICE mkpart primary fat32 2M 512M
+    DEVICE_ESP=${DEVICE}1
 else
     parted $DEVICE mklabel msdos
     DEVICE_PARTITION_TABLE=msdos
@@ -757,15 +760,18 @@ fi
 
 echo "Past mounting" >> ~/log
 
-pacstraptodo="base base-devel $networkman grub os-prober efibootmgr dosfstools"
+
+
+
+pacstraptodo="base base-devel $networkman grub os-prober efibootmgr dosfstools dkms"
 if [[ $LTS == TRUE ]]; then
-    pacstraptodo="$pacstraptodo linux-lts linux-lts-dkms"
+    pacstraptodo="$pacstraptodo linux-lts linux-lts-headers"
 else
-    pacstraptodo="$pacstraptodo linux-dkms"
+    pacstraptodo="$pacstraptodo linux-headers"
 fi
 
 pacstrap /mnt $pacstraptodo
-
+read
 echo "Past pacstrap" >> ~/log
 
 if [[ ! $language == en_US ]]; then echo $language.UTF-8 UTF-8 >> /mnt/etc/locale.gen; fi
