@@ -823,8 +823,8 @@ fi
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 echo "Past grub" >> ~/log
 arch-chroot /mnt passwd <<EOF
-"$password"
-"$password"
+$password
+$password
 EOF
 
 echo "Past passwd" >> ~/log
