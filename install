@@ -715,22 +715,22 @@ if [[ $UEFI == 1 ]]; then
   parted $DEVICE mklabel gpt
   DEVICE_PARTITION_TABLE=gpt
   parted $DEVICE mkpart primary fat32 2M 512M
-  DEVICE_ESP={$DEVICE}1
+  DEVICE_ESP=${DEVICE}1
 else
     parted $DEVICE mklabel msdos
     DEVICE_PARTITION_TABLE=msdos
 fi
 parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM
-if [[ $DEVICE_ESP == {$DEVICE}1 ]]; then
-    DEVICE_SWAP={$DEVICE}2
+if [[ $DEVICE_ESP == ${DEVICE}1 ]]; then
+    DEVICE_SWAP=${DEVICE}2
 else
-    DEVICE_SWAP={$DEVICE}1
+    DEVICE_SWAP=${DEVICE}1
 fi
 parted $DEVICE mkpart primary ext4 $TOTAL_RAM 100%
-if [[ $DEVICE_SWAP == {$DEVICE}1 ]]; then
-    DEVICE_ROOT={$DEVICE}2
-elif [[ $DEVICE_SWAP == {$DEVICE}2 ]]; then
-    DEVICE_ROOT={$DEVICE}3
+if [[ $DEVICE_SWAP == ${DEVICE}1 ]]; then
+    DEVICE_ROOT=${DEVICE}2
+elif [[ $DEVICE_SWAP == ${DEVICE}2 ]]; then
+    DEVICE_ROOT=${DEVICE}3
 else
     echo An Error occured partitioning Root
     read
@@ -750,8 +750,10 @@ mkfs.ext4 $DEVICE_ROOT $temptrimcommand
 echo "Past mkfs etc" >> ~/log
 
 mount $DEVICE_ROOT /mnt
-mkdir /mnt/boot
-mount $DEVICE_ESP /mnt/boot
+if [[ $UEFI == 1 ]]; then
+    mkdir /mnt/boot
+    mount $DEVICE_ESP /mnt/boot
+fi
 
 echo "Past mounting" >> ~/log
 
