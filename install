@@ -265,8 +265,12 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
         clear
         echo Please set the hardware clock \(UTC or Localtime\) \(UTC Recommended, Localtime if dualbooting with Windows\)
         read hwclockvar
-        if [[ $hwclockvar == UTC ]]; then BOOL_MENUCOMPLETE=TRUE
-        elif [[ $hwclockvar == Localtime ]]; then BOOL_MENUCOMPLETE=TRUE
+        if [[ $hwclockvar == UTC ]]; then
+        hwclockvar=utc
+        break
+        elif [[ $hwclockvar == Localtime ]]; then
+        hwclockvar=localtime
+        break
         else
             echo Please enter a valid hwclock value
             read
@@ -774,7 +778,7 @@ else
 fi
 
 pacstrap /mnt $pacstraptodo
-read
+
 echo "Past pacstrap" >> ~/log
 
 if [[ ! $language == en_US ]]; then echo $language.UTF-8 UTF-8 >> /mnt/etc/locale.gen; fi
@@ -797,8 +801,8 @@ arch-chroot /mnt hwclock --$hwclockvar --systohc
 echo "Past clock stuff" >> ~/log
 
 echo $hostname > /mnt/etc/hostname
-arch-chroot /mnt sed -i '/127.0.0.1/s/$/ '${host_name}'/' /etc/hosts
-arch-chroot /mnt sed -i '/::1/s/$/ '${host_name}'/' /etc/hosts
+arch-chroot /mnt sed -i '/127.0.0.1/s/$/ '${hostname}'/' /etc/hosts
+arch-chroot /mnt sed -i '/::1/s/$/ '${hostname}'/' /etc/hosts
 
 echo "Past hostname" >> ~/log
 
@@ -814,7 +818,7 @@ echo "Past mkinitcpio" >> ~/log
 if [[ $UEFI == 1 ]]; then
     arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=arch-linux
 else
-    arch-chroot /mnt grub-install --target=i386-pc $device
+    arch-chroot /mnt grub-install --target=i386-pc $DEVICE
 fi
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 echo "Past grub" >> ~/log
@@ -836,6 +840,6 @@ swapoff $DEVICE_ROOT
 
 echo "Finished " >> ~/log
 
-systemctl reboot
+#systemctl reboot
 ##en d of install
 ##Todo add config stuff
