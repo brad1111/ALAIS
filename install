@@ -784,11 +784,7 @@ echo "Past pacstrap" >> ~/log
 if [[ ! $language == en_US ]]; then echo $language.UTF-8 UTF-8 >> /mnt/etc/locale.gen; fi
 echo en_US.UTF-8 UTF-8 >> /mnt/etc/locale.gen
 
-
-
 arch-chroot /mnt locale-gen
-
-
 
 echo LANG=$language > /mnt/etc/locale.conf
 echo KEYMAP=$keymap > /mnt/etc/vconsole.conf
