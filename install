@@ -292,12 +292,15 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
         clear
         echo Please set your network manager \(Networkmanager, Connman, or Wicd\)
         read networkman
-        if [[ $networkman == Networkmanager ]]; then break
+        if [[ $networkman == Networkmanager ]]; then
         $networkman=networkmanager
-        elif [[ $networkman == ConnMan ]]; then break
+        break
+        elif [[ $networkman == ConnMan ]]; then
         $networkman=connman
-        elif [[ $networkman == Wicd ]]; then break
+        break
+        elif [[ $networkman == Wicd ]]; then
         $networkman=wicd
+        break
         else
             echo Please enter a valid network manager
             read
