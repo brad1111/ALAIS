@@ -660,62 +660,92 @@ fi
 
 ####Config en d
 ####Installation Start
-DEVICE_PARTITION_TABLE=NULL
-DEVICE_ESP=
-DEVICE_SWAP=
-DEVICE_ROOT=
-if [[ $BOOL_AUTOINST == FALSE ]]; then partitioner=parted; fi
-partition_man()
-{
-    if [[ $partitioner == parted ]]; then
-        if [[ %{1} == msdos ]]; then
-            parted $DEVICE mklabel msdos
-            DEVICE_PARTITION_TABLE=msdos
-            
-        elif [[ %{1} == gpt ]]; then
-            parted $DEVICE mklabel gpt
-            DEVICE_PARTITION_TABLE=gpt
-        elif [[ %{1} == esp ]]; then
-            parted $DEVICE mkpart primary fat32 2M 512M
-            DEVICE_ESP={$DEVICE}1
-        elif [[ %{1} == swap ]]; then
-            parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM
-            if [[ $DEVICE_ESP == "" ]]; then DEVICE_SWAP={$DEVICE}1; else DEVICE_SWAP={$DEVICE}2; fi
-        elif [[ %{1} == root ]]; then
-            parted $DEVICE mkpart primary ext4 100%
-            if [[ $DEVICE_SWAP == {$DEVICE}1 ]]; then DEVICE_ROOT={$DEVICE}2; elif [[ $DEVICE_SWAP == {$DEVICE}2 ]]; then DEVICE_ROOT={$DEVICE}3; else echo An Error occured partitioning Root; read; exit 1; fi
-            if [[ $DEVICE_PARTITION_TABLE == msdos ]] && [[ $UEFI == 0 ]]; then
-                parted $DEVICE set 2 boot on #MBR BOOTABLE PARITITON
-            fi
-        fi
-    fi
-}
+# DEVICE_PARTITION_TABLE=NULL
+# DEVICE_ESP=
+# DEVICE_SWAP=
+# DEVICE_ROOT=
+# if [[ $BOOL_AUTOINST == FALSE ]]; then partitioner=parted; fi
+# partition_man()
+# {
+#     if [[ $partitioner == parted ]]; then
+#         if [[ %{1} == msdos ]]; then
+#             parted $DEVICE mklabel msdos
+#             DEVICE_PARTITION_TABLE=msdos
+#             
+#         elif [[ %{1} == gpt ]]; then
+#             parted $DEVICE mklabel gpt
+#             DEVICE_PARTITION_TABLE=gpt
+#         elif [[ %{1} == esp ]]; then
+#             parted $DEVICE mkpart primary fat32 2M 512M
+#             DEVICE_ESP={$DEVICE}1
+#         elif [[ %{1} == swap ]]; then
+#             parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM
+#             if [[ $DEVICE_ESP == "" ]]; then DEVICE_SWAP={$DEVICE}1; else DEVICE_SWAP={$DEVICE}2; fi
+#         elif [[ %{1} == root ]]; then
+#             parted $DEVICE mkpart primary ext4 100%
+#             if [[ $DEVICE_SWAP == {$DEVICE}1 ]]; then DEVICE_ROOT={$DEVICE}2; elif [[ $DEVICE_SWAP == {$DEVICE}2 ]]; then DEVICE_ROOT={$DEVICE}3; else echo An Error occured partitioning Root; read; exit 1; fi
+#             if [[ $DEVICE_PARTITION_TABLE == msdos ]] && [[ $UEFI == 0 ]]; then
+#                 parted $DEVICE set 2 boot on #MBR BOOTABLE PARITITON
+#             fi
+#         fi
+#     fi
+# }
+# 
+# 
+# #Choose Partition ##NO current support for BIOS/gpt + grub
+# #if [[ $BOOL_AUTOINST == FALSE ]]; then
+#  BOOL_MENUCOMPLETE=FALSE 
+#  while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
+#        clear
+#        ###Later enable BIOS boot partition etc
+#        ###UEFI Partition
+#         if [[ $UEFI == 1 ]]; then
+#            partition_man "gpt"
+#            partition_man "esp"
+#         else
+#            partition_man "msdos"
+#         fi
+#        partition_man "swap"
+#        partition_man "root"
+#        break
+#  done
+# #fi
+
+if [[ $UEFI == 1 ]]; then
+  parted $DEVICE mklabel gpt
+  DEVICE_PARTITION_TABLE=gpt
+  parted $DEVICE mkpart primary fat32 2M 512M
+  DEVICE_ESP={$DEVICE}1
+else
+    parted $DEVICE mklabel msdos
+    DEVICE_PARTITION_TABLE=msdos
+fi
+parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM
+if [[ $DEVICE_ESP == {$DEVICE}1 ]]; then
+    DEVICE_SWAP={$DEVICE}2
+else
+    DEVICE_SWAP={$DEVICE}1
+fi
+parted $DEVICE mkpart primary ext4 $TOTAL_RAM 100%
+if [[ $DEVICE_SWAP == {$DEVICE}1 ]]; then
+    DEVICE_ROOT={$DEVICE}2
+elif [[ $DEVICE_SWAP == {$DEVICE}2 ]]; then
+    DEVICE_ROOT={$DEVICE}3
+else
+    echo An Error occured partitioning Root
+    read
+    exit 1
+fi
 
 
-#Choose Partition ##NO current support for BIOS/gpt + grub
-#if [[ $BOOL_AUTOINST == FALSE ]]; then
- BOOL_MENUCOMPLETE=FALSE 
- while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
-       clear
-       ###Later enable BIOS boot partition etc
-       ###UEFI Partition
-        if [[ $UEFI == 1 ]]; then
-           partition_man "gpt"
-           partition_man "esp"
-        else
-           partition_man "msdos"
-        fi
-       partition_man "swap"
-       partition_man "root"
-       break
- done
-#fi
+
+
 echo "Past partman" >> ~/log
 ##Create partitions
 if [[ $TRIM == 1 ]]; then temptrimcommand="-E discard"; fi
 mkswap $DEVICE_SWAP
 swapon $DEVICE_SWAP
-mkfs.fat -F32 $DEVICE_ESP
+if [[ $UEFI == 1 ]]; then mkfs.fat -F32 $DEVICE_ESP; fi
 mkfs.ext4 $DEVICE_ROOT $temptrimcommand
 echo "Past mkfs etc" >> ~/log
 
