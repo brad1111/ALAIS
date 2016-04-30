@@ -722,12 +722,12 @@ fi
 # #fi
 
 if [[ $UEFI == 1 ]]; then
-    parted $DEVICE mklabel gpt
+    parted $DEVICE mklabel gpt yes
     DEVICE_PARTITION_TABLE=gpt
     parted $DEVICE mkpart primary fat32 2M 512M
     DEVICE_ESP=${DEVICE}1
 else
-    parted $DEVICE mklabel msdos
+    parted $DEVICE mklabel msdos yes
     DEVICE_PARTITION_TABLE=msdos
 fi
 parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM
@@ -750,14 +750,16 @@ fi
 
 
 
-echo "Past partman" >> ~/log
+
 ##Create partitions
 if [[ $TRIM == 1 ]]; then temptrimcommand="-E discard"; fi
 mkswap $DEVICE_SWAP
 swapon $DEVICE_SWAP
 if [[ $UEFI == 1 ]]; then mkfs.fat -F32 $DEVICE_ESP; fi
-mkfs.ext4 $DEVICE_ROOT $temptrimcommand
-echo "Past mkfs etc" >> ~/log
+mkfs.ext4 $DEVICE_ROOT $temptrimcommand <<EOF
+y
+EOF
+
 
 mount $DEVICE_ROOT /mnt
 if [[ $UEFI == 1 ]]; then
@@ -765,7 +767,7 @@ if [[ $UEFI == 1 ]]; then
     mount $DEVICE_ESP /mnt/boot
 fi
 
-echo "Past mounting" >> ~/log
+
 
 
 
@@ -779,7 +781,6 @@ fi
 
 pacstrap /mnt $pacstraptodo
 
-echo "Past pacstrap" >> ~/log
 
 if [[ ! $language == en_US ]]; then echo $language.UTF-8 UTF-8 >> /mnt/etc/locale.gen; fi
 echo en_US.UTF-8 UTF-8 >> /mnt/etc/locale.gen
@@ -789,18 +790,15 @@ arch-chroot /mnt locale-gen
 echo LANG=$language > /mnt/etc/locale.conf
 echo KEYMAP=$keymap > /mnt/etc/vconsole.conf
 
-echo "Past language + Keymap" >> ~/log
 
 arch-chroot /mnt ln -s /usr/share/zoneinfo/$timezone /etc/localtime
 arch-chroot /mnt hwclock --$hwclockvar --systohc
 
-echo "Past clock stuff" >> ~/log
 
 echo $hostname > /mnt/etc/hostname
 arch-chroot /mnt sed -i '/127.0.0.1/s/$/ '${hostname}'/' /etc/hosts
 arch-chroot /mnt sed -i '/::1/s/$/ '${hostname}'/' /etc/hosts
 
-echo "Past hostname" >> ~/log
 
 if [[ $LTS == TRUE ]]; then
     arch-chroot /mnt pacman -Rs --noconfirm linux
@@ -809,21 +807,19 @@ else
     arch-chroot /mnt mkinitcpio -p linux
 fi
 
-echo "Past mkinitcpio" >> ~/log
-
 if [[ $UEFI == 1 ]]; then
     arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=arch-linux
 else
     arch-chroot /mnt grub-install --target=i386-pc $DEVICE
 fi
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
-echo "Past grub" >> ~/log
+
 arch-chroot /mnt passwd <<EOF
 $password
 $password
 EOF
 
-echo "Past passwd" >> ~/log
+
 
 arch-chroot /mnt systemctl enable $networkman
 if [[ $DEVICE_ESP == "" ]]; then
@@ -834,8 +830,23 @@ fi
 umount -R /mnt
 swapoff $DEVICE_ROOT
 
-echo "Finished " >> ~/log
 
 #systemctl reboot
 ##en d of install
 ##Todo add config stuff
+
+# 
+# BOOL_BASICSETUP=FALSE
+# BOOL_SSH=FALSE
+# BOOL_NFS=FALSE
+# BOOL_SAMBA=FALSE
+# BOOL_READAHEAD=FALSE
+# BOOL_FONTCONFIG=NORM #Will change to nonbool
+# BOOL_XORG=FALSE
+# BOOL_CUPS=FALSE
+# DESKTOP_ENV= #No window manager/destop environment because no xorg
+# DISPLAY_MAN= #No display manager because no xorg
+# BOOL_PAMAC=FALSE    #No pamac or octopi because there is no xorg/wm/de
+# BOOL_OCTOPI=FALSE
+# BOOL_PLYMOUTH=FALSE
+# 
