@@ -2,6 +2,7 @@
 #Find RAM
 TOTAL_RAM=2048
 UEFI=0 #Default is BIOS
+user=user
 ##en d Find Ram
 ##Find UEFI
   check_boot_system() { ###From Helmuthdu/Aui
@@ -55,39 +56,52 @@ fi
   }
 check_trim
 
-##Copied from helmuthdu/aui (GPL 3.0)
-    check_vga()
-    {
-        if [[ -n $(dmidecode --type 1 | grep VirtualBox) ]]; then
-      echo Virtualbox
-      VIDEO_DRIVER="virtualbox"
-    elif [[ $_vga_length -eq 2 ]] && [[ -n $(echo ${_vga} | grep "nvidia") || -f /sys/kernel/debug/dri/0/vbios.rom ]]; then
-      echo Bumblebee
-      VIDEO_DRIVER="bumblebee"
-    elif [[ -n $(echo ${_vga} | grep "nvidia") || -f /sys/kernel/debug/dri/0/vbios.rom ]]; then
-      echo Nvidia
-      read_input_text "Install NVIDIA proprietary driver" $PROPRIETARY_DRIVER
-      if [[ $OPTION == y ]]; then
-        VIDEO_DRIVER="nvidia"
-      else
-        VIDEO_DRIVER="nouveau"
-      fi
-    elif [[ -n $(echo ${_vga} | grep "advanced micro devices") || -f /sys/kernel/debug/dri/0/radeon_pm_info || -f /sys/kernel/debug/dri/0/radeon_sa_info ]]; then
-      echo AMD/ATI
-      VIDEO_DRIVER="ati"
-    elif [[ -n $(echo ${_vga} | grep "intel corporation") || -f /sys/kernel/debug/dri/0/i915_capabilities ]]; then
-      echo Intel
-      VIDEO_DRIVER="intel"
-    #Open-VM-Tools support by Thebradad1111 (Checks for VMWare drivers)
-    elif [[ -n $(dmidecode --type 1 | grep VMware) ]]; then
-      echo VMware
-      VIDEO_DRIVER="openvmware"
-    else
-      echo VESA
-      VIDEO_DRIVER="vesa"
-    fi
-    }   ##End of copied from aui
-
+# ##Copied from helmuthdu/aui (GPL 3.0)
+#     check_vga()
+#     {
+#         if [[ -n $(dmidecode --type 1 | grep VirtualBox) ]]; then
+#       echo Virtualbox
+#       VIDEO_DRIVER="virtualbox"
+#     elif [[ $_vga_length -eq 2 ]] && [[ -n $(echo ${_vga} | grep "nvidia") || -f /sys/kernel/debug/dri/0/vbios.rom ]]; then
+#       echo Bumblebee
+#       VIDEO_DRIVER="bumblebee"
+#     elif [[ -n $(echo ${_vga} | grep "nvidia") || -f /sys/kernel/debug/dri/0/vbios.rom ]]; then
+#       echo Nvidia
+#       read_input_text "Install NVIDIA proprietary driver" $PROPRIETARY_DRIVER
+#       if [[ $OPTION == y ]]; then
+#         VIDEO_DRIVER="nvidia"
+#       else
+#         VIDEO_DRIVER="nouveau"
+#       fi
+#     elif [[ -n $(echo ${_vga} | grep "advanced micro devices") || -f /sys/kernel/debug/dri/0/radeon_pm_info || -f /sys/kernel/debug/dri/0/radeon_sa_info ]]; then
+#       echo AMD/ATI
+#       VIDEO_DRIVER="ati"
+#     elif [[ -n $(echo ${_vga} | grep "intel corporation") || -f /sys/kernel/debug/dri/0/i915_capabilities ]]; then
+#       echo Intel
+#       VIDEO_DRIVER="intel"
+#     #Open-VM-Tools support by Thebradad1111 (Checks for VMWare drivers)
+#     elif [[ -n $(dmidecode --type 1 | grep VMware) ]]; then
+#       echo VMware
+#       VIDEO_DRIVER="openvmware"
+#     else
+#       echo VESA
+#       VIDEO_DRIVER="vesa"
+#     fi
+#     }   ##End of copied from aui
+# 
+#       replace_line() { #{{{
+#     local _search=${1}
+#     local _replace=${2}
+#     local _filepath=${3}
+#     local _filebase=`basename ${3}`
+# 
+#     sed -e "s/${_search}/${_replace}/" ${_filepath} > /tmp/${_filebase} 2>"$LOG"
+#     if [[ ${?} -eq 0 ]]; then
+#       mv /tmp/${_filebase} ${_filepath}
+#     else
+#       cecho "failed: ${_search} - ${_filepath}"
+#     fi
+#   } #}}}
 BOOL_AUTOINST=FALSE
 if [[ -f `pwd`/autoinstall ]]; then #Checks for AutoInstall script for arch linux
     source autoinstall
@@ -157,7 +171,7 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
         echo Showing all Devices
         lsblk
         echo "Ending showing all devices"
-        echo --------------------------
+        echo "--------------------------"
         echo What device \(hard drive letter a = disk 0\) do you want to install to?
         read DEVICE
         if [[ $DEVICE == "/dev/sd"* ]]; then
@@ -299,7 +313,7 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
         if [[ $networkman == Networkmanager ]]; then
         $networkman=networkmanager
         break
-        elif [[ $networkman == ConnMan ]]; then
+        elif [[ $networkman == Connman ]]; then
         $networkman=connman
         break
         elif [[ $networkman == Wicd ]]; then
@@ -449,13 +463,13 @@ PConfWiz()
         echo What fontconfig \[Normal, Infinality, Ubuntu\] \[1,2,3\]
         read fontconfigOPTION
         if [[ $fontconfigOPTION == 1 ]]; then
-            BOOL_FONTCONFIG=NORM
+            FONTCONFIG=NORM
             break
         elif [[ $fontconfigOPTION == 2 ]]; then
-            BOOL_FONTCONFIG=INF
+            FONTCONFIG=INF
             break
         elif [[ $fontconfigOPTION == 3 ]]; then
-            BOOL_FONTCONFIG=UBUNTU
+            FONTCONFIG=UBUNTU
             break
         else
             echo Please enter a valid answer \[Y/N\]
@@ -576,14 +590,20 @@ PConfWiz()
         fi
     done
     ##Todo add different DM support
+    DISPLAY_MAN_GREETER=
     if [[ $DESKTOP_ENV == KDE ]]; then
-        DISPLAY_MAN=lightdm lightdm-kde-greeter
+        DISPLAY_MAN=sddm
     elif [[ $DESKTOP_ENV == LXQT ]]; then
-        DISPLAY_MAN=lightdm lightdm-kde-greeter
+        DISPLAY_MAN=sddm
     elif [[ $DESKTOP_ENV == "" ]]; then #NO DESKTOP ENVIRONMENT
         DISPLAY_MAN=
+    elif [[ $DESKTOP_ENV == GNOME ]]; then
+        DISPLAY_MAN=gdm
+    elif [[ $DESKTOP_ENV == LXDE ]]; then
+        DISPLAY_MAN=lxdm
     else
-        DISPLAY_MAN=lightdm lightdm-gtk-greeter
+        DISPLAY_MAN=lightdm
+        DISPLAY_MAN_GREETER=lightdm-gtk-greeter
     fi
     
 
@@ -819,16 +839,16 @@ $password
 $password
 EOF
 
-
+if [[ $networkman == networkmanager ]]; then arch-chroot /mnt systemctl enable NetworkManager; else; arch-chroot /mnt systemctl enable $networkman; fi
 
 arch-chroot /mnt systemctl enable $networkman
-if [[ $DEVICE_ESP == "" ]]; then
-    echo &> /dev/null
-else
-    umount -R /mnt/boot
-fi
-umount -R /mnt
-swapoff $DEVICE_ROOT
+#if [[ $DEVICE_ESP == "" ]]; then
+#    echo &> /dev/null
+#else
+#    umount -R /mnt/boot
+#fi
+#umount -R /mnt
+#swapoff $DEVICE_SWAP
 
 
 #systemctl reboot
@@ -841,7 +861,7 @@ swapoff $DEVICE_ROOT
 # BOOL_NFS=FALSE
 # BOOL_SAMBA=FALSE
 # BOOL_READAHEAD=FALSE
-# BOOL_FONTCONFIG=NORM #Will change to nonbool
+# FONTCONFIG=NORM #Will change to nonbool
 # BOOL_XORG=FALSE
 # BOOL_CUPS=FALSE
 # DESKTOP_ENV= #No window manager/destop environment because no xorg
@@ -850,3 +870,123 @@ swapoff $DEVICE_ROOT
 # BOOL_OCTOPI=FALSE
 # BOOL_PLYMOUTH=FALSE
 # 
+
+# USER=
+
+ARCHI=`uname -m` #Architecture
+
+if [[ $ARCHI == x86_64 ]]; then
+    _has_multilib=`grep -n "\n[multilib\]" /etc/pacman.conf | cut -f1 -d:`
+    if [[ -z $_has_multilib ]]; then
+        echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
+        echo -e "\nMultilib repository added to pacman.conf"
+    else
+        sed -i "${_has_multilib}s/^#//" /etc/pacman.conf
+        _has_multilib=$(( ${_has_multilib} + 1 ))
+        sed -i "${_has_multilib}s/^#//" /etc/pacman.conf
+    fi
+fi ##Copied from helmuthdu/aui
+arch-chroot /mnt useradd -m -G wheel -s /bin/bash $user
+arch-chroot /mnt passwd $user <<EOF
+$password
+$password
+EOF
+sed -i '/%wheel ALL=(ALL) ALL/s/^#//' /mnt/etc/sudoers
+TEMPADDEDTOPOSTINST=
+TEMPADDEDAUR=
+BOOL_UBUNTUCONF=FALSE
+if [[ $BOOL_BASICSETUP == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST bc rsync mlocate bash-completion pkgstats ntp zip unzip unrar p7zip lzop cpio avahi nss-mdns alsa-utils alsa-plugins pulseaudio pulseaudio-alsa ntfs-3g dosfstools exfat-utils f2fs-tools fuse fuse-exfat autofs"; fi
+if [[ $BOOL_BASICSETUP == TRUE ]] && [[ $ARCH == x86_64 ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST lib32-alsa-plugins lib32-libpulse"; fi
+if [[ $BOOL_SSH == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST openssh"; fi
+if [[ $BOOL_NFS == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST nfs-utils"; fi
+if [[ $BOOL_SAMBA == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST samba smbnetfs"; fi
+if [[ $FONTCONFIG == NORM ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST cairo fontconfig freetype2"; fi
+if [[ $FONTCONFIG == INF ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST infinality-bundle"
+if [[ $FONTCONFIG == INF ]] && [[ $ARCH == x86_64 ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST infinality-bundle-multilib"; fi
+if [[ $FONTCONFIG == UBUNTU ]]; then BOOL_UBUNTUCONF=TRUE; fi
+if [[ $BOOL_XORG == TRUE ]]; then
+    TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST xorg-server xorg-server-utils xorg-server-xwayland xorg-xinit xorg-xkill xf86-input-synaptics xf86-input-mouse xf86-input-keyboard xf86-input-wacom xf86-input-libinput mesa"
+    _vga=`lspci | grep VGA | tr "[:upper:]" "[:lower:]"`
+    _vga_length=`lspci | grep VGA | wc -l`
+    pacstrap /mnt dmidecode
+    pacman --noconfirm -S dmidecode
+    if [[ -n $(dmidecode --type 1 | grep VirtualBox) ]]; then
+    #VBOX
+    arch-chroot /mnt pacman --noconfirm -S --needed virtualbox-guest-utils mesa-libgl virtualbox-guest-dkms
+    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-libgl;fi
+    arch-chroot /mnt gpasswd -a $user vboxsf
+    #arch-chroot /mnt systemctl diable ntpd
+    arch-chroot /mnt systemctl enable vboxservice
+    elif [[ $_vga_length -eq 2 ]] && [[ -n $(echo ${_vga} | grep "nvidia") || -f /sys/kernel/debug/dri/0/vbios.rom ]]; then
+    #NVidia bumblebee
+    arch-chroot /mnt pacman --noconfirm -S --needed xf86-video-intel bumblebee nvidia
+    [[ ${ARCHI} == x86_64 ]] && arch-chroot /mnt pacman --noconfirm -S --needed lib32-nvidia-utils
+    replace_line '*options nouveau modeset=1' '#options nouveau modeset=1' /mnt/etc/modprobe.d/modprobe.conf
+    replace_line '*MODULES="nouveau"' '#MODULES="nouveau"' /mnt/etc/mkinitcpio.conf
+    arch-chroot /mnt mkinitcpio -p linux
+    arch-chroot /mnt mkinitcpio -p linux-lts
+    arch-chroot /mnt gpasswd -a $user bumblebee
+    elif [[ -n $(echo ${_vga} | grep "nvidia") || -f /sys/kernel/debug/dri/0/vbios.rom ]]; then
+    #Nvidia (Proprietary)
+    arch-chroot /mnt pacman --noconfirm -S --needed libva-vdpau-driver nvidia nvidia-utils
+    [[ ${ARCHI} == x86_64 ]] && arch-chroot /mnt pacman --noconfirm -S --needed lib32-nvidia-utils
+    replace_line '*options nouveau modeset=1' '#options nouveau modeset=1' /mnt/etc/modprobe.d/modprobe.conf
+    replace_line '*MODULES="nouveau"' '#MODULES="nouveau"' /mnt/etc/mkinitcpio.conf
+    arch-chroot /mnt mkinitcpio -p linux
+    arch-chroot /mnt mkinitcpio -p linux-lts
+    arch-chroot /mnt nvidia-xconfig --add-arg-glx-visuals --allow-glx-with-composite --composite -no-logo --render-accel -o /etc/X11/xorg.conf.d/20-nvidia.conf;
+    echo export LIBVA_DRIVER_NAME=vdpau >> /mnt/etc/profile
+    elif [[ -n $(echo ${_vga} | grep "advanced micro devices" || -f /sys/kernel/debug/dri/0/radeon_pm_info || -f /sys/kernel/debug/dri/0/radeon_sa_info ]]; then
+    #AMD/ATI
+    [[ -f /mnt/etc/X11/xorg.conf.d/20-radeon.conf ]] && rm /etc/X11/xorg.conf.d/20-radeon.conf
+    [[ -f /mnt/etc/modules-load.d/catalyst.conf ]] && rm /etc/modules-load.d/catalyst.conf
+    [[ -f /mnt/etc/X11/xorg.conf ]] && rm /etc/X11/xorg.conf
+    arch-chroot /mnt pacman --noconfirm -S --needed xf86-video-ati mesa-libgl mesa-vdpau libva-vdpau-driver
+    echo export LIBVA_DRIVER_NAME=vdpau >> /mnt/etc/profile
+    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-vdpau;fi
+    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-libgl;fi
+    elif [[ -n $(echo ${_vga} | grep "intel corporation") || -f /sys/kernel/debug/dri/0/i915_capabilities ]]; then
+    #Intel
+    arch-chroot /mnt pacman --noconfirm -S --needed xf86-video-intel mesa-libgl libva-intel-driver
+    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-libgl;fi
+    else
+    #VESA
+    arch-chroot /mnt pacman --noconfirm -S --needed xf86-video-vesa mesa-libgl libva-vdpau-driver
+    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-libgl;fi
+    echo export LIBVA_DRIVER_NAME=vdpau >> /mnt/etc/profile
+    fi
+    
+fi
+
+
+
+if [[ $BOOL_CUPS == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST cups cups-filters ghostscript gsfonts gutenprint foomatic-db foomatic-db-engine foomatic-db-nonfree foomatic-filters hplip splix cups-pdf system-config-printer"; fi
+
+if [[ $LOCALE == pt_BR || $LOCALE == en_GB || $LOCALE == zn_CN ]]; then
+    LOCALE_KDE=`echo $LOCALE | tr '[:upper:]' '[:lower:]'`
+elif [[ $LOCALE == en_US ]]; then
+    LOCALE_KDE="en_gb"
+else
+    LOCALE_KDE=`echo $LOCALE | cut -d\_ -f1`
+fi
+
+#DESKTOPENV
+if [[ $DESKTOP_ENV == Cinnamon ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST cinnamon nemo-fileroller nemo-preview"; fi
+if [[ $DESKTOP_ENV == Enlightenment ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST enlightenment terminology leafpad epdfview lxappearance"; fi
+if [[ $DESKTOP_ENV == GNOME ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST gnome gnome-extra telepathy gedit-plugins gpaste gnome-tweak-tool gnome-power-manager gucharmap gvfs-goa deja-dup"; fi
+if [[ $DESKTOP_ENV == KDE ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST plasma kde-applications-meta kde-meta-kdenetwork kde-meta-kdeutils kde-l10n-$LOCALE_KDE sddm kio-mtp"; fi
+if [[ $DESKTOP_ENV == LXDE ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST lxde leafpad obconf epdfview"; fi
+if [[ $DESKTOP_ENV == LXQT ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST lxqt openbox oxygen-icons qtcurve leafpad epdfview kio-mtp"; fi
+if [[ $DESKTOP_ENV == MATE ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST mate mate-extra"; fi
+if [[ $DESKTOP_ENV == XFCE ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST xfce4 xfce4-goodies xarchiver mupdf"; fi
+if [[ $DESKTOP_ENV == Awesome ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST awesome lxappearance leafpad epdfview nitrogen"; fi
+if [[ $DESKTOP_ENV == Fluxbox ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST fluxbox menumaker lxappearance leafpad epdfview"; fi
+if [[ $DESKTOP_ENV == i3 ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST i3 dmenu"; fi
+if [[ $DESKTOP_ENV == Openbox ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST openbox obconf obmenu menumaker lxappearance leafpad epdfview nitrogen"; fi
+if [[ $DESKTOP_ENV == Xmonad ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST xmonad xmonad-contrib"; fi
+
+if [[ $DESKTOP_ENV != KDE ]] && [[ $DESKTOP_ENV != LXQT ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST gvfs gvfs-mtp gvfs-afc gvfs-gogle xdg-user-dirs pavucontrol ttf-bitstream-vera ttf-dejavu gnome-defaults-list"; fi
+TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST $DISPLAY_MAN $DISPLAY_MAN_GREETER"
+TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST wxgtk2.8"
+mkdir -p /mnt/home/$user/.compose-cache
+pacstrap /mnt $TEMPADDEDTOPOSTINST
