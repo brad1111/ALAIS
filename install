@@ -996,5 +996,49 @@ if [[ $DESKTOP_ENV == Xmonad ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOS
 if [[ $DESKTOP_ENV != KDE ]] && [[ $DESKTOP_ENV != LXQT ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST gvfs gvfs-mtp gvfs-afc gvfs-gogle xdg-user-dirs pavucontrol ttf-bitstream-vera ttf-dejavu gnome-defaults-list"; fi
 TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST $DISPLAY_MAN $DISPLAY_MAN_GREETER"
 TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST wxgtk2.8"
+TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST git"
+TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST yajl rsync"
+TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST $CUSTOMPKGS"
+
+
+if [[ $BOOL_PAMAC == TRUE ]]; then TEMPADDEDAUR="$TEMPADDEDAUR pamac"; fi
+if [[ $BOOL_OCTOPI == TRUE ]]; then TEMPADDEDAUR="$TEMPADDEDAUR octopi"; fi
+if [[ $BOOL_PLYMOUTH == TRUE ]]; then 
+TEMPADDEDAUR="$TEMPADDEDAUR plymouth"
+TEMPADDEDAUR="$(TEMPADDEDAUR)$PLYMOUTH_VARIANT"
+fi
+if [[ $BOOL_XORG == TRUE ]] && [[ $DISPLAY_MAN != "" ]]; then arch-chroot /mnt systemctl enable $DISPLAY_MAN;fi
+
 mkdir -p /mnt/home/$user/.compose-cache
 pacstrap /mnt $TEMPADDEDTOPOSTINST
+arch-chroot /mnt useradd tempuser
+cp /mnt/etc/sudoers /mnt/etc/sudoers.bak
+echo "tempuser ALL=(ALL) NOPASSWD: ALL" >> /mnt/etc/sudoers
+arch-chroot /mnt su tempuser <<EOF
+mkdir /tmp
+mkdir /tmp/tempuser
+cd /tmp/tempuser
+git clone https://aur.archlinux.org/package-query.git
+git clone https://aur.archlinux.org/yaourt.git
+cd ./package-query
+makepkg -sci
+cd ../yaourt
+makepkg -sci
+cd ..
+rm -R ./package-query
+rm -R ./yaourt
+yaourt --noconfirm -S $TEMPADDEDAUR
+if [[ $BOOL_PlYMOUTH == TRUE ]]; then
+    sed -e "s/ autodetect/ plymouth autodetect/" /etc/mkinitcpio.conf /etc/mkinitcpio.conf
+    sed -e 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/' /etc/default/grub /etc/default/grub
+    grub-mkconfig -o /boot/grub/grub.cfg
+    plymouth-set-default-theme -R $PLYMOUTH_THEME
+fi
+EOF
+umount -R /mnt/boot
+umount -R /mnt
+swapoff $DEVICE_SWAP
+clear
+echo If you do not want to restart please press CTRL + C now to cancel rebooting
+sleep 10
+reboot
