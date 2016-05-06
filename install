@@ -3,6 +3,8 @@
 TOTAL_RAM=2048
 UEFI=0 #Default is BIOS
 user=user
+BOOL_BIOS_GPT=FALSE #Not yet implemented
+BOOL_UEFI_MBR=FALSE #Not yet implemented
 ##en d Find Ram
 ##Find UEFI
   check_boot_system() { ###From Helmuthdu/Aui
@@ -691,7 +693,7 @@ fi
 ####Config en d
 ####Installation Start
 # DEVICE_PARTITION_TABLE=NULL
-# DEVICE_ESP=
+# DEVICE_BOOT=
 # DEVICE_SWAP=
 # DEVICE_ROOT=
 # if [[ $BOOL_AUTOINST == FALSE ]]; then partitioner=parted; fi
@@ -707,10 +709,10 @@ fi
 #             DEVICE_PARTITION_TABLE=gpt
 #         elif [[ %{1} == esp ]]; then
 #             parted $DEVICE mkpart primary fat32 2M 512M
-#             DEVICE_ESP={$DEVICE}1
+#             DEVICE_BOOT={$DEVICE}1
 #         elif [[ %{1} == swap ]]; then
 #             parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM
-#             if [[ $DEVICE_ESP == "" ]]; then DEVICE_SWAP={$DEVICE}1; else DEVICE_SWAP={$DEVICE}2; fi
+#             if [[ $DEVICE_BOOT == "" ]]; then DEVICE_SWAP={$DEVICE}1; else DEVICE_SWAP={$DEVICE}2; fi
 #         elif [[ %{1} == root ]]; then
 #             parted $DEVICE mkpart primary ext4 100%
 #             if [[ $DEVICE_SWAP == {$DEVICE}1 ]]; then DEVICE_ROOT={$DEVICE}2; elif [[ $DEVICE_SWAP == {$DEVICE}2 ]]; then DEVICE_ROOT={$DEVICE}3; else echo An Error occured partitioning Root; read; exit 1; fi
@@ -741,31 +743,37 @@ fi
 #  done
 # #fi
 
-if [[ $UEFI == 1 ]]; then
+if [[ $UEFI == 1 && $BOOL_UEFI_MBR == FALSE ]] || [[ $UEFI == 0 && $BOOL_BIOS_GPT == TRUE ]]; then
     parted $DEVICE mklabel gpt yes
     DEVICE_PARTITION_TABLE=gpt
-    parted $DEVICE mkpart primary fat32 2M 512M
-    DEVICE_ESP=${DEVICE}1
 else
     parted $DEVICE mklabel msdos yes
     DEVICE_PARTITION_TABLE=msdos
 fi
+if [[ $UEFI == 0 && $BOOL_BIOS_GPT ]]; then
+    parted $DEVICE mkpart primary bios_grub 1M 2M
+else
+    parted $DEVICE mkpart primary fat32 2M 512M
+    DEVICE_BOOT=${DEVICE}1
+fi
+
+
 parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM
-if [[ $DEVICE_ESP == ${DEVICE}1 ]]; then
+#if [[ $DEVICE_BOOT == ${DEVICE}1 ]]; then
     DEVICE_SWAP=${DEVICE}2
-else
-    DEVICE_SWAP=${DEVICE}1
-fi
+#else
+#    DEVICE_SWAP=${DEVICE}1
+#fi
 parted $DEVICE mkpart primary ext4 $TOTAL_RAM 100%
-if [[ $DEVICE_SWAP == ${DEVICE}1 ]]; then
-    DEVICE_ROOT=${DEVICE}2
-elif [[ $DEVICE_SWAP == ${DEVICE}2 ]]; then
-    DEVICE_ROOT=${DEVICE}3
-else
-    echo An Error occured partitioning Root
-    read
-    exit 1
-fi
+#if [[ $DEVICE_SWAP == ${DEVICE}1 ]]; then
+#    DEVICE_ROOT=${DEVICE}2
+#elif [[ $DEVICE_SWAP == ${DEVICE}2 ]]; then
+#    DEVICE_ROOT=${DEVICE}3
+#else
+#    echo An Error occured partitioning Root
+#    read
+#    exit 1
+#fi
 
 
 
@@ -775,16 +783,16 @@ fi
 if [[ $TRIM == 1 ]]; then temptrimcommand="-E discard"; fi
 mkswap $DEVICE_SWAP
 swapon $DEVICE_SWAP
-if [[ $UEFI == 1 ]]; then mkfs.fat -F32 $DEVICE_ESP; fi
+if [[ $UEFI == 1 ]] || [[ $DEVICE_BOOT != "" ]]; then mkfs.fat -F32 $DEVICE_BOOT; fi
 mkfs.ext4 $DEVICE_ROOT $temptrimcommand <<EOF
 y
 EOF
 
 
 mount $DEVICE_ROOT /mnt
-if [[ $UEFI == 1 ]]; then
+if [[ $UEFI == 1 ]] || [[ $DEVICE_BOOT != "" ]]; then
     mkdir /mnt/boot
-    mount $DEVICE_ESP /mnt/boot
+    mount $DEVICE_BOOT /mnt/boot
 fi
 
 
@@ -842,7 +850,7 @@ EOF
 if [[ $networkman == networkmanager ]]; then arch-chroot /mnt systemctl enable NetworkManager; else; arch-chroot /mnt systemctl enable $networkman; fi
 
 arch-chroot /mnt systemctl enable $networkman
-#if [[ $DEVICE_ESP == "" ]]; then
+#if [[ $DEVICE_BOOT == "" ]]; then
 #    echo &> /dev/null
 #else
 #    umount -R /mnt/boot
