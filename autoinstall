@@ -1,0 +1,19 @@
+#!/bin/bash
+#This is an example autoinstall script of ALAIS
+#This may not be currently up-to-date if a newer tool has been released to create scripts
+
+BOOL_AUTOINST=TRUE #To skip all of the prompts for info
+KEYMAP=uk #Set UK keyboard layout (not currently working)
+EDITOR=nano #To maintain compaitibility with aui if needed (the project which this was based on)
+DEVICE=/dev/sda #Set hard drive to 1 (will eventually allow user to only select device etc.)
+BOOL_BIOS_GPT=FALSE #Bios installs as MBR (like normal)
+BOOL_UEFI_MBR=FALSE #UEFI isntalls as GPT (like normal) (UEFI/MBR not currently implemented)
+LANGUAGE=en_GB #Sets language as English UK with English US support still (UTF-8 support only)
+timezone=Europe/London #Sets the timezone to uk (GMT + 0/ BST)
+hwclockvar=utc #Hardware clock (CMOS clock) set to UTC/GMT as opposed to your localtime (recommended for linux, less so for dual boots)
+hostname=arch #The name for the computer
+networkman=networkmanager #Network Manager set as the default network manager
+password=user #Unencrypted, unsecure password please do not put your real password in this script
+BOOL_BASICSETUP=TRUE #bc, rsync, mclocate, bash-completion pkgstats ntp avahi alsa pulseaudio install
+BOOL_SHH=TRUE #SSH install
+##TBA
