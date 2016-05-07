@@ -5,6 +5,7 @@ UEFI=0 #Default is BIOS
 user=user
 BOOL_BIOS_GPT=FALSE #Not yet implemented
 BOOL_UEFI_MBR=FALSE #Not yet implemented
+FORMAT_ROOT_TYPE=ext4
 ##en d Find Ram
 ##Find UEFI
   check_boot_system() { ###From Helmuthdu/Aui
@@ -26,6 +27,7 @@ BOOL_UEFI_MBR=FALSE #Not yet implemented
     fi
   }
   check_boot_system
+  sleep 1
 ##en d Find UEFI
 
 check_connection() {
@@ -41,52 +43,6 @@ fi
   }
 check_trim
 
-# ##Copied from helmuthdu/aui (GPL 3.0)
-#     check_vga()
-#     {
-#         if [[ -n $(dmidecode --type 1 | grep VirtualBox) ]]; then
-#       echo Virtualbox
-#       VIDEO_DRIVER="virtualbox"
-#     elif [[ $_vga_length -eq 2 ]] && [[ -n $(echo ${_vga} | grep "nvidia") || -f /sys/kernel/debug/dri/0/vbios.rom ]]; then
-#       echo Bumblebee
-#       VIDEO_DRIVER="bumblebee"
-#     elif [[ -n $(echo ${_vga} | grep "nvidia") || -f /sys/kernel/debug/dri/0/vbios.rom ]]; then
-#       echo Nvidia
-#       read_input_text "Install NVIDIA proprietary driver" $PROPRIETARY_DRIVER
-#       if [[ $OPTION == y ]]; then
-#         VIDEO_DRIVER="nvidia"
-#       else
-#         VIDEO_DRIVER="nouveau"
-#       fi
-#     elif [[ -n $(echo ${_vga} | grep "advanced micro devices") || -f /sys/kernel/debug/dri/0/radeon_pm_info || -f /sys/kernel/debug/dri/0/radeon_sa_info ]]; then
-#       echo AMD/ATI
-#       VIDEO_DRIVER="ati"
-#     elif [[ -n $(echo ${_vga} | grep "intel corporation") || -f /sys/kernel/debug/dri/0/i915_capabilities ]]; then
-#       echo Intel
-#       VIDEO_DRIVER="intel"
-#     #Open-VM-Tools support by Thebradad1111 (Checks for VMWare drivers)
-#     elif [[ -n $(dmidecode --type 1 | grep VMware) ]]; then
-#       echo VMware
-#       VIDEO_DRIVER="openvmware"
-#     else
-#       echo VESA
-#       VIDEO_DRIVER="vesa"
-#     fi
-#     }   ##End of copied from aui
-# 
-#       replace_line() { #{{{
-#     local _search=${1}
-#     local _replace=${2}
-#     local _filepath=${3}
-#     local _filebase=`basename ${3}`
-# 
-#     sed -e "s/${_search}/${_replace}/" ${_filepath} > /tmp/${_filebase} 2>"$LOG"
-#     if [[ ${?} -eq 0 ]]; then
-#       mv /tmp/${_filebase} ${_filepath}
-#     else
-#       cecho "failed: ${_search} - ${_filepath}"
-#     fi
-#   } #}}}
 BOOL_AUTOINST=FALSE
 if [[ -f `pwd`/autoinstall ]]; then #Checks for AutoInstall script for arch linux
     source autoinstall
@@ -171,7 +127,7 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
 
 
 ##SetFstab
-if [[ $BOOL_AUTOINST == FALSE ]]; then
+
     if [[ -n $(dmidecode --type 1 | grep VirtualBox) ]]; then
         LTS=TRUE
     elif [[ -n $(dmidecode --type 1 | grep VMware) ]]; then
@@ -182,7 +138,7 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
     else
         FSTABTYPE=UUID
     fi
-fi
+
 
 ##Language
 if [[ $BOOL_AUTOINST == FALSE ]]; then
@@ -675,56 +631,6 @@ fi
 
 ####Config en d
 ####Installation Start
-# DEVICE_PARTITION_TABLE=NULL
-# DEVICE_BOOT=
-# DEVICE_SWAP=
-# DEVICE_ROOT=
-# if [[ $BOOL_AUTOINST == FALSE ]]; then partitioner=parted; fi
-# partition_man()
-# {
-#     if [[ $partitioner == parted ]]; then
-#         if [[ %{1} == msdos ]]; then
-#             parted $DEVICE mklabel msdos
-#             DEVICE_PARTITION_TABLE=msdos
-#             
-#         elif [[ %{1} == gpt ]]; then
-#             parted $DEVICE mklabel gpt
-#             DEVICE_PARTITION_TABLE=gpt
-#         elif [[ %{1} == esp ]]; then
-#             parted $DEVICE mkpart primary fat32 2M 512M
-#             DEVICE_BOOT={$DEVICE}1
-#         elif [[ %{1} == swap ]]; then
-#             parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM
-#             if [[ $DEVICE_BOOT == "" ]]; then DEVICE_SWAP={$DEVICE}1; else DEVICE_SWAP={$DEVICE}2; fi
-#         elif [[ %{1} == root ]]; then
-#             parted $DEVICE mkpart primary ext4 100%
-#             if [[ $DEVICE_SWAP == {$DEVICE}1 ]]; then DEVICE_ROOT={$DEVICE}2; elif [[ $DEVICE_SWAP == {$DEVICE}2 ]]; then DEVICE_ROOT={$DEVICE}3; else echo An Error occured partitioning Root; read; exit 1; fi
-#             if [[ $DEVICE_PARTITION_TABLE == msdos ]] && [[ $UEFI == 0 ]]; then
-#                 parted $DEVICE set 2 boot on #MBR BOOTABLE PARITITON
-#             fi
-#         fi
-#     fi
-# }
-# 
-# 
-# #Choose Partition ##NO current support for BIOS/gpt + grub
-# #if [[ $BOOL_AUTOINST == FALSE ]]; then
-#  BOOL_MENUCOMPLETE=FALSE 
-#  while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
-#        clear
-#        ###Later enable BIOS boot partition etc
-#        ###UEFI Partition
-#         if [[ $UEFI == 1 ]]; then
-#            partition_man "gpt"
-#            partition_man "esp"
-#         else
-#            partition_man "msdos"
-#         fi
-#        partition_man "swap"
-#        partition_man "root"
-#        break
-#  done
-# #fi
 
 if [[ $UEFI == 1 && $BOOL_UEFI_MBR == FALSE ]] || [[ $UEFI == 0 && $BOOL_BIOS_GPT == TRUE ]]; then
     parted $DEVICE mklabel gpt yes
@@ -733,55 +639,36 @@ else
     parted $DEVICE mklabel msdos yes
     DEVICE_PARTITION_TABLE=msdos
 fi
-if [[ $UEFI == 0 && $BOOL_BIOS_GPT ]]; then
-    parted $DEVICE mkpart primary bios_grub 1M 2M
+if [[ $UEFI == 0 && $BOOL_BIOS_GPT == TRUE ]]; then
+    parted $DEVICE mkpart primary ext2 1M 2M
+    parted $DEVICE set 1 bios_grub on
 else
     parted $DEVICE mkpart primary fat32 2M 512M
     DEVICE_BOOT=${DEVICE}1
+    if [[ $UEFI == 0 ]]; then
+        parted $DEVICE set 1 boot on
+    fi
 fi
 
-
 parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM
-#if [[ $DEVICE_BOOT == ${DEVICE}1 ]]; then
-    DEVICE_SWAP=${DEVICE}2
-#else
-#    DEVICE_SWAP=${DEVICE}1
-#fi
+
 parted $DEVICE mkpart primary ext4 $TOTAL_RAM 100%
-#if [[ $DEVICE_SWAP == ${DEVICE}1 ]]; then
-#    DEVICE_ROOT=${DEVICE}2
-#elif [[ $DEVICE_SWAP == ${DEVICE}2 ]]; then
-#    DEVICE_ROOT=${DEVICE}3
-#else
-#    echo An Error occured partitioning Root
-#    read
-#    exit 1
-#fi
-
-
-
-
 
 ##Create partitions
 if [[ $TRIM == 1 ]]; then temptrimcommand="-E discard"; fi
 mkswap $DEVICE_SWAP
 swapon $DEVICE_SWAP
 if [[ $UEFI == 1 ]] || [[ $DEVICE_BOOT != "" ]]; then mkfs.fat -F32 $DEVICE_BOOT; fi
-mkfs.ext4 $DEVICE_ROOT $temptrimcommand <<EOF
+mkfs --type=$FORMAT_ROOT_TYPE $DEVICE_ROOT $temptrimcommand <<EOF
 y
 EOF
 
 
 mount $DEVICE_ROOT /mnt
-if [[ $UEFI == 1 ]] || [[ $DEVICE_BOOT != "" ]]; then
+if [[ $DEVICE_BOOT != "" ]]; then
     mkdir /mnt/boot
     mount $DEVICE_BOOT /mnt/boot
 fi
-
-
-
-
-
 
 pacstraptodo="base base-devel $networkman grub os-prober efibootmgr dosfstools dkms"
 if [[ $LTS == TRUE ]]; then
@@ -819,7 +706,12 @@ else
 fi
 
 if [[ $UEFI == 1 ]]; then
-    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=arch-linux
+    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=arch
+    if [[ -n $(dmidecode --type 1 | grep VirtualBox) ]]; then
+        mkdir /mnt/boot/EFI/BOOT
+        cp /mnt/boot/EFI/arch/grubx64.efi /mnt/boot/EFI/BOOT/BOOTX64.efi
+        cp /mnt/boot/EFI/arch/grubia32.efi /mnt/boot/EFI/BOOT/bootia32.efi
+    fi
 else
     arch-chroot /mnt grub-install --target=i386-pc $DEVICE
 fi
@@ -833,36 +725,6 @@ EOF
 if [[ $networkman == networkmanager ]]; then arch-chroot /mnt systemctl enable NetworkManager; else; arch-chroot /mnt systemctl enable $networkman; fi
 
 arch-chroot /mnt systemctl enable $networkman
-#if [[ $DEVICE_BOOT == "" ]]; then
-#    echo &> /dev/null
-#else
-#    umount -R /mnt/boot
-#fi
-#umount -R /mnt
-#swapoff $DEVICE_SWAP
-
-
-#systemctl reboot
-##en d of install
-##Todo add config stuff
-
-# 
-# BOOL_BASICSETUP=FALSE
-# BOOL_SSH=FALSE
-# BOOL_NFS=FALSE
-# BOOL_SAMBA=FALSE
-# BOOL_READAHEAD=FALSE
-# FONTCONFIG=NORM #Will change to nonbool
-# BOOL_XORG=FALSE
-# BOOL_CUPS=FALSE
-# DESKTOP_ENV= #No window manager/destop environment because no xorg
-# DISPLAY_MAN= #No display manager because no xorg
-# BOOL_PAMAC=FALSE    #No pamac or octopi because there is no xorg/wm/de
-# BOOL_OCTOPI=FALSE
-# BOOL_PLYMOUTH=FALSE
-# 
-
-# USER=
 
 ARCHI=`uname -m` #Architecture
 
