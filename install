@@ -651,8 +651,9 @@ else
 fi
 
 parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM
-
+DEVICE_SWAP=${DEVICE}2
 parted $DEVICE mkpart primary ext4 $TOTAL_RAM 100%
+DEVICE_ROOT=${DEVICE}3
 
 ##Create partitions
 if [[ $TRIM == 1 ]]; then temptrimcommand="-E discard"; fi
