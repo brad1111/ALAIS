@@ -1,14 +1,14 @@
 #!/bin/bash
-#Find RAM
-TOTAL_RAM=2048
-UEFI=0 #Default is BIOS
-user=user
+##Find RAM Section
+TOTAL_RAM=2048 #Ram detection not yet implemented
+UEFI=0 #Sets the default Firmware to be BIOS. In case detection fails for some reason.
+user=user #Sets the default user to user if not supplied
 BOOL_BIOS_GPT=FALSE #Not yet implemented
-BOOL_UEFI_MBR=FALSE #Not yet implemented
-FORMAT_ROOT_TYPE=ext4
-##en d Find Ram
-##Find UEFI
-  check_boot_system() { ###From Helmuthdu/Aui
+#BOOL_UEFI_MBR=FALSE ||| UEFI_MBR Support cancelled
+FORMAT_ROOT_TYPE=ext4 #Set default root format to be ext4 for compatability and ease of use. Can be changed with autoinst script
+##end of Find Ram Section
+##Find UEFI Section
+  check_boot_system() { ###Copied From Helmuthdu/Aui (GPL3)
     if [[ "$(cat /sys/class/dmi/id/sys_vendor)" == 'Apple Inc.' ]] || [[ "$(cat /sys/class/dmi/id/sys_vendor)" == 'Apple Computer, Inc.' ]]; then
       modprobe -r -q efivars || true  # if MAC
     else
@@ -28,9 +28,9 @@ FORMAT_ROOT_TYPE=ext4
   }
   check_boot_system
   sleep 1
-##en d Find UEFI
+##end of Find UEFI Section
 
-check_connection() {
+check_connection() { ###Copied From Helmuthdu/Aui (GPL3) ||| to check to see if the user has internet connection
 ping -q -w 1 -c 1 `ip r | grep default | awk 'NR==1 {print $3}'` &> /dev/null && return 1 || return 0
 }
 if [[ check_connection == 0 ]]; then
@@ -38,17 +38,17 @@ if [[ check_connection == 0 ]]; then
     read
     exit 1
 fi
-  check_trim() {  ##Copied from helmuthdu/aui
+  check_trim() {  ###Copied from helmuthdu/aui (GPL3) ||| to check to see if the user has an SSD and enable SSD trim later
     [[ -n $(hdparm -I /dev/sda | grep TRIM &> /dev/null) ]] && TRIM=1
   }
 check_trim
 
-BOOL_AUTOINST=FALSE
-if [[ -f `pwd`/autoinstall ]]; then #Checks for AutoInstall script for arch linux
+BOOL_AUTOINST=FALSE #To set autoinst script off as default
+if [[ -f `pwd`/autoinstall ]]; then #Checks for AutoInstall script for this application then uses that script
     source autoinstall
 fi
 
-####Config Section
+####Config Section (Skipped with Autoinst) [Todo Commenting]
 BOOL_MENUCOMPLETE=FALSE
 ##KEYMAP Section
 while [[ $BOOL_MENUCOMPLETE == FALSE ]]; do
@@ -629,84 +629,85 @@ if [[ $BOOL_AUTOINST == FALSE ]]; then
     done
 fi
 
-####Config en d
-####Installation Start
+####end of Config Section [Todo Commenting]
+####Installation Section
 
-if [[ $UEFI == 1 && $BOOL_UEFI_MBR == FALSE ]] || [[ $UEFI == 0 && $BOOL_BIOS_GPT == TRUE ]]; then
+if [[ $UEFI == 1 ]] || [[ $UEFI == 0 && $BOOL_BIOS_GPT == TRUE ]]; then #To check if the user wants gpt instead of mbr (Required for UEFI, an option for BIOS)
     parted $DEVICE mklabel gpt yes
     DEVICE_PARTITION_TABLE=gpt
-else
+else #Default option for BIOS
     parted $DEVICE mklabel msdos yes
     DEVICE_PARTITION_TABLE=msdos
 fi
-if [[ $UEFI == 0 && $BOOL_BIOS_GPT == TRUE ]]; then
+if [[ $UEFI == 0 && $BOOL_BIOS_GPT == TRUE ]]; then #IF the system is a BIOS and formated with GPT create the GRUB partition for BIOS/GPT
     parted $DEVICE mkpart primary ext2 1M 2M
     parted $DEVICE set 1 bios_grub on
 else
-    parted $DEVICE mkpart primary fat32 2M 512M
+    parted $DEVICE mkpart primary fat32 2M 512M #[Todo] Have this only be fat32 on UEFI/GPT 
     DEVICE_BOOT=${DEVICE}1
     if [[ $UEFI == 0 ]]; then
         parted $DEVICE set 1 boot on
     fi
 fi
 
-parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM
+parted $DEVICE mkpart primary linux-swap 513M $TOTAL_RAM #Create the swap to total size - 513MB ||| [Todo] $TOTAL_RAM + 513M
 DEVICE_SWAP=${DEVICE}2
-parted $DEVICE mkpart primary ext4 $TOTAL_RAM 100%
+parted $DEVICE mkpart primary ext4 $TOTAL_RAM 100% #Create the main ROOT partition (No /home parition created with this script [Todo] with autoinst script)
 DEVICE_ROOT=${DEVICE}3
 
-##Create partitions
-if [[ $TRIM == 1 ]]; then temptrimcommand="-E discard"; fi
+##Create partitions sub-section
+if [[ $TRIM == 1 ]]; then temptrimcommand="-E discard"; fi #Give a trim command if trim is enabled
 mkswap $DEVICE_SWAP
 swapon $DEVICE_SWAP
-if [[ $UEFI == 1 ]] || [[ $DEVICE_BOOT != "" ]]; then mkfs.fat -F32 $DEVICE_BOOT; fi
-mkfs --type=$FORMAT_ROOT_TYPE $DEVICE_ROOT $temptrimcommand <<EOF
+if [[ $UEFI == 1 ]] || [[ $DEVICE_BOOT != "" ]]; then mkfs.fat -F32 $DEVICE_BOOT; fi #If you have a UEFI system or have created a boot parition then format the boot partition
+mkfs --type=$FORMAT_ROOT_TYPE $DEVICE_ROOT $temptrimcommand <<EOF #format ROOT to a specified type, and use the trim command from earlier if enabled.
 y
 EOF
-
+#EOF to stop keyboard input being required
 
 mount $DEVICE_ROOT /mnt
-if [[ $DEVICE_BOOT != "" ]]; then
+if [[ $DEVICE_BOOT != "" ]]; then #If you have a Boot partition then mount it
     mkdir /mnt/boot
     mount $DEVICE_BOOT /mnt/boot
 fi
 
-pacstraptodo="base base-devel $networkman grub os-prober efibootmgr dosfstools dkms"
+pacstraptodo="base base-devel $networkman grub os-prober efibootmgr dosfstools dkms" #[Todo] fix this section
 if [[ $LTS == TRUE ]]; then
-    pacstraptodo="$pacstraptodo linux-lts linux-lts-headers"
+    pacstraptodo="$pacstraptodo linux-lts linux-lts-headers" #Install long term support Linux
 else
-    pacstraptodo="$pacstraptodo linux-headers"
+    pacstraptodo="$pacstraptodo linux-headers" #Install Regular Linux
 fi
 
-pacstrap /mnt $pacstraptodo
+pacstrap /mnt $pacstraptodo #Starts install process
 
 
-if [[ ! $language == en_US ]]; then echo $language.UTF-8 UTF-8 >> /mnt/etc/locale.gen; fi
-echo en_US.UTF-8 UTF-8 >> /mnt/etc/locale.gen
+if [[ ! $language == en_US ]]; then echo $language.UTF-8 UTF-8 >> /mnt/etc/locale.gen; fi #For any language other than US, set that language to be generated
+echo en_US.UTF-8 UTF-8 >> /mnt/etc/locale.gen #Set the US language to be generated
 
-arch-chroot /mnt locale-gen
+arch-chroot /mnt locale-gen #Generate lanuages
 
-echo LANG=$language > /mnt/etc/locale.conf
-echo KEYMAP=$keymap > /mnt/etc/vconsole.conf
-
-
-arch-chroot /mnt ln -s /usr/share/zoneinfo/$timezone /etc/localtime
-arch-chroot /mnt hwclock --$hwclockvar --systohc
+echo LANG=$language > /mnt/etc/locale.conf #Set language
+echo KEYMAP=$keymap > /mnt/etc/vconsole.conf #Set keymap ||| [Todo] Fix this
 
 
-echo $hostname > /mnt/etc/hostname
+arch-chroot /mnt ln -s /usr/share/zoneinfo/$timezone /etc/localtime #Set timezone
+arch-chroot /mnt hwclock --$hwclockvar --systohc #Set CMOS clock
+
+# |||
+# VVV set hostname for machine
+echo $hostname > /mnt/etc/hostname 
 arch-chroot /mnt sed -i '/127.0.0.1/s/$/ '${hostname}'/' /etc/hosts
 arch-chroot /mnt sed -i '/::1/s/$/ '${hostname}'/' /etc/hosts
 
 
 if [[ $LTS == TRUE ]]; then
-    arch-chroot /mnt pacman -Rs --noconfirm linux
-    arch-chroot /mnt mkinitcpio -p linux-lts
+    arch-chroot /mnt pacman -Rs --noconfirm linux #For version linux is not required as it's provided in linux-lts
+    arch-chroot /mnt mkinitcpio -p linux-lts #Build linux-lts initramfs
 else
-    arch-chroot /mnt mkinitcpio -p linux
+    arch-chroot /mnt mkinitcpio -p linux #Build regular linux initramfs
 fi
 
-if [[ $UEFI == 1 ]]; then
+if [[ $UEFI == 1 ]]; then #For UEFI systems install grub in UEFI mode
     arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=arch
     if [[ -n $(dmidecode --type 1 | grep VirtualBox) ]]; then
         mkdir /mnt/boot/EFI/BOOT
@@ -714,18 +715,21 @@ if [[ $UEFI == 1 ]]; then
         cp /mnt/boot/EFI/arch/grubia32.efi /mnt/boot/EFI/BOOT/bootia32.efi
     fi
 else
-    arch-chroot /mnt grub-install --target=i386-pc $DEVICE
+    arch-chroot /mnt grub-install --target=i386-pc $DEVICE #For BIOS systems install grub in BIOS mode
 fi
-arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg #Setup grub config
 
-arch-chroot /mnt passwd <<EOF
+arch-chroot /mnt passwd <<EOF #Setup password for root
 $password
 $password
 EOF
+#EOF is to stop the requirement of user input
 
-if [[ $networkman == networkmanager ]]; then arch-chroot /mnt systemctl enable NetworkManager; else; arch-chroot /mnt systemctl enable $networkman; fi
+if [[ $networkman == networkmanager ]]; then arch-chroot /mnt systemctl enable NetworkManager; else; arch-chroot /mnt systemctl enable $networkman; fi #Enable networkmanager for first boot ||| [Todo] fix NetworkManager support etc.
 
-arch-chroot /mnt systemctl enable $networkman
+#arch-chroot /mnt systemctl enable $networkman
+
+#[Todo] Finish commenting
 
 ARCHI=`uname -m` #Architecture
 
