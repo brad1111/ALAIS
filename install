@@ -729,11 +729,11 @@ if [[ $networkman == networkmanager ]]; then arch-chroot /mnt systemctl enable N
 
 #arch-chroot /mnt systemctl enable $networkman
 
-#[Todo] Finish commenting
+
 
 ARCHI=`uname -m` #Architecture
 
-if [[ $ARCHI == x86_64 ]]; then
+if [[ $ARCHI == x86_64 ]]; then ### This section is copied from helmuthdu/aui GPL3
     _has_multilib=`grep -n "\n[multilib\]" /etc/pacman.conf | cut -f1 -d:`
     if [[ -z $_has_multilib ]]; then
         echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
@@ -743,74 +743,79 @@ if [[ $ARCHI == x86_64 ]]; then
         _has_multilib=$(( ${_has_multilib} + 1 ))
         sed -i "${_has_multilib}s/^#//" /etc/pacman.conf
     fi
-fi ##Copied from helmuthdu/aui
-arch-chroot /mnt useradd -m -G wheel -s /bin/bash $user
-arch-chroot /mnt passwd $user <<EOF
+fi ### End of copied section
+arch-chroot /mnt useradd -m -G wheel -s /bin/bash $user #Creates an admistrative user
+arch-chroot /mnt passwd $user <<EOF #Sets their password
 $password
 $password
 EOF
-sed -i '/%wheel ALL=(ALL) ALL/s/^#//' /mnt/etc/sudoers
+
+sed -i '/%wheel ALL=(ALL) ALL/s/^#//' /mnt/etc/sudoers #Allows Admin users to use SUDO command
+
+#[Todo] trial having the following after first reboot
+
 TEMPADDEDTOPOSTINST=
 TEMPADDEDAUR=
 BOOL_UBUNTUCONF=FALSE
-if [[ $BOOL_BASICSETUP == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST bc rsync mlocate bash-completion pkgstats ntp zip unzip unrar p7zip lzop cpio avahi nss-mdns alsa-utils alsa-plugins pulseaudio pulseaudio-alsa ntfs-3g dosfstools exfat-utils f2fs-tools fuse fuse-exfat autofs"; fi
-if [[ $BOOL_BASICSETUP == TRUE ]] && [[ $ARCH == x86_64 ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST lib32-alsa-plugins lib32-libpulse"; fi
-if [[ $BOOL_SSH == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST openssh"; fi
-if [[ $BOOL_NFS == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST nfs-utils"; fi
-if [[ $BOOL_SAMBA == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST samba smbnetfs"; fi
-if [[ $FONTCONFIG == NORM ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST cairo fontconfig freetype2"; fi
-if [[ $FONTCONFIG == INF ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST infinality-bundle"
-if [[ $FONTCONFIG == INF ]] && [[ $ARCH == x86_64 ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST infinality-bundle-multilib"; fi
-if [[ $FONTCONFIG == UBUNTU ]]; then BOOL_UBUNTUCONF=TRUE; fi
+if [[ $BOOL_BASICSETUP == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST bc rsync mlocate bash-completion pkgstats ntp zip unzip unrar p7zip lzop cpio avahi nss-mdns alsa-utils alsa-plugins pulseaudio pulseaudio-alsa ntfs-3g dosfstools exfat-utils f2fs-tools fuse fuse-exfat autofs"; fi #Enables Basic Setup options
+if [[ $BOOL_BASICSETUP == TRUE ]] && [[ $ARCH == x86_64 ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST lib32-alsa-plugins lib32-libpulse"; fi #Enables Basic Setup options for x64
+if [[ $BOOL_SSH == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST openssh"; fi #Enables SSH installation
+if [[ $BOOL_NFS == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST nfs-utils"; fi #Enables NFS installation
+if [[ $BOOL_SAMBA == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST samba smbnetfs"; fi #Enables SMB installation (Windows Network Shares)
+if [[ $FONTCONFIG == NORM ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST cairo fontconfig freetype2"; fi #Enables install of fontconfig
+if [[ $FONTCONFIG == INF ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST infinality-bundle" #Enables install of infinality
+if [[ $FONTCONFIG == INF ]] && [[ $ARCH == x86_64 ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST infinality-bundle-multilib"; fi #Enables install of extra functionality of infinality in x64
+if [[ $FONTCONFIG == UBUNTU ]]; then BOOL_UBUNTUCONF=TRUE; fi #Enables Ubuntu-Fonts to be installed
+###!!! Alot of the BOOL_XORG section includes scripts from helmuthdu/aui (GPL3)
 if [[ $BOOL_XORG == TRUE ]]; then
-    TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST xorg-server xorg-server-utils xorg-server-xwayland xorg-xinit xorg-xkill xf86-input-synaptics xf86-input-mouse xf86-input-keyboard xf86-input-wacom xf86-input-libinput mesa"
-    _vga=`lspci | grep VGA | tr "[:upper:]" "[:lower:]"`
-    _vga_length=`lspci | grep VGA | wc -l`
-    pacstrap /mnt dmidecode
-    pacman --noconfirm -S dmidecode
+    TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST xorg-server xorg-server-utils xorg-server-xwayland xorg-xinit xorg-xkill xf86-input-synaptics xf86-input-mouse xf86-input-keyboard xf86-input-wacom xf86-input-libinput mesa" #Installs basic X-Server components
+    _vga=`lspci | grep VGA | tr "[:upper:]" "[:lower:]"` #For compability with certain GPU's
+    _vga_length=`lspci | grep VGA | wc -l` #For compatibility with certain GPU's
+    #pacstrap /mnt dmidecode
+    pacman --noconfirm -S dmidecode #Checks for dmidecode install to check for certain GPU's
     if [[ -n $(dmidecode --type 1 | grep VirtualBox) ]]; then
-    #VBOX
-    arch-chroot /mnt pacman --noconfirm -S --needed virtualbox-guest-utils mesa-libgl virtualbox-guest-dkms
-    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-libgl;fi
-    arch-chroot /mnt gpasswd -a $user vboxsf
-    #arch-chroot /mnt systemctl diable ntpd
-    arch-chroot /mnt systemctl enable vboxservice
+    #VBOX is detected
+    arch-chroot /mnt pacman --noconfirm -S --needed virtualbox-guest-utils mesa-libgl virtualbox-guest-dkms #Installs virtualbox-drivers
+    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-libgl;fi #Installs virtualbox-drivers for multilib (x86 on x64)
+    arch-chroot /mnt gpasswd -a $user vboxsf #Adds user to virtualbox shared folders group so said user can interact with shared folders
+    #arch-chroot /mnt systemctl disable ntpd ##NTPD not enabled in the first place
+    arch-chroot /mnt systemctl enable vboxservice #Enable virtualbox drivers to be on boot
     elif [[ $_vga_length -eq 2 ]] && [[ -n $(echo ${_vga} | grep "nvidia") || -f /sys/kernel/debug/dri/0/vbios.rom ]]; then
-    #NVidia bumblebee
-    arch-chroot /mnt pacman --noconfirm -S --needed xf86-video-intel bumblebee nvidia
-    [[ ${ARCHI} == x86_64 ]] && arch-chroot /mnt pacman --noconfirm -S --needed lib32-nvidia-utils
+    #NVidia bumblebee is detected
+    arch-chroot /mnt pacman --noconfirm -S --needed xf86-video-intel bumblebee nvidia #Installs Nvidia bumblebee drivers
+    [[ ${ARCHI} == x86_64 ]] && arch-chroot /mnt pacman --noconfirm -S --needed lib32-nvidia-utils #Install Nvidia bumblebee drivers for multilib
     replace_line '*options nouveau modeset=1' '#options nouveau modeset=1' /mnt/etc/modprobe.d/modprobe.conf
-    replace_line '*MODULES="nouveau"' '#MODULES="nouveau"' /mnt/etc/mkinitcpio.conf
-    arch-chroot /mnt mkinitcpio -p linux
-    arch-chroot /mnt mkinitcpio -p linux-lts
-    arch-chroot /mnt gpasswd -a $user bumblebee
+    replace_line '*MODULES="nouveau"' '#MODULES="nouveau"' /mnt/etc/mkinitcpio.conf #Enables Nouveau (opensource nvidia driver) KMS function for plymouth etc.
+    arch-chroot /mnt mkinitcpio -p linux #Rebuild initramfs for linux kernel
+    arch-chroot /mnt mkinitcpio -p linux-lts #Rebuild initramfs for linux-lts kernel
+    arch-chroot /mnt gpasswd -a $user bumblebee #Add user to bumblebee group (To Allow GPU switching?)
     elif [[ -n $(echo ${_vga} | grep "nvidia") || -f /sys/kernel/debug/dri/0/vbios.rom ]]; then
-    #Nvidia (Proprietary)
-    arch-chroot /mnt pacman --noconfirm -S --needed libva-vdpau-driver nvidia nvidia-utils
-    [[ ${ARCHI} == x86_64 ]] && arch-chroot /mnt pacman --noconfirm -S --needed lib32-nvidia-utils
+    #Nvidia (Proprietary) is detected
+    arch-chroot /mnt pacman --noconfirm -S --needed libva-vdpau-driver nvidia nvidia-utils #Installs Nvidia's proprietary drivers for better graphics performance
+    [[ ${ARCHI} == x86_64 ]] && arch-chroot /mnt pacman --noconfirm -S --needed lib32-nvidia-utils #Install Nvidia's multilib drivers
     replace_line '*options nouveau modeset=1' '#options nouveau modeset=1' /mnt/etc/modprobe.d/modprobe.conf
-    replace_line '*MODULES="nouveau"' '#MODULES="nouveau"' /mnt/etc/mkinitcpio.conf
-    arch-chroot /mnt mkinitcpio -p linux
-    arch-chroot /mnt mkinitcpio -p linux-lts
-    arch-chroot /mnt nvidia-xconfig --add-arg-glx-visuals --allow-glx-with-composite --composite -no-logo --render-accel -o /etc/X11/xorg.conf.d/20-nvidia.conf;
+    replace_line '*MODULES="nouveau"' '#MODULES="nouveau"' /mnt/etc/mkinitcpio.conf #Enables Nouveau (opensource nvidia driver) KMS function for plymouth etc.
+    arch-chroot /mnt mkinitcpio -p linux #Rebuild initramfs for linux kernel
+    arch-chroot /mnt mkinitcpio -p linux-lts #Rebuilds initramfs for linux-lts kernel
+    arch-chroot /mnt nvidia-xconfig --add-arg-glx-visuals --allow-glx-with-composite --composite -no-logo --render-accel -o /etc/X11/xorg.conf.d/20-nvidia.conf; #Config for something
     echo export LIBVA_DRIVER_NAME=vdpau >> /mnt/etc/profile
     elif [[ -n $(echo ${_vga} | grep "advanced micro devices" || -f /sys/kernel/debug/dri/0/radeon_pm_info || -f /sys/kernel/debug/dri/0/radeon_sa_info ]]; then
-    #AMD/ATI
-    [[ -f /mnt/etc/X11/xorg.conf.d/20-radeon.conf ]] && rm /etc/X11/xorg.conf.d/20-radeon.conf
-    [[ -f /mnt/etc/modules-load.d/catalyst.conf ]] && rm /etc/modules-load.d/catalyst.conf
-    [[ -f /mnt/etc/X11/xorg.conf ]] && rm /etc/X11/xorg.conf
-    arch-chroot /mnt pacman --noconfirm -S --needed xf86-video-ati mesa-libgl mesa-vdpau libva-vdpau-driver
+    #AMD/ATI is detected
+    [[ -f /mnt/etc/X11/xorg.conf.d/20-radeon.conf ]] && rm /etc/X11/xorg.conf.d/20-radeon.conf #Removes old configs
+    [[ -f /mnt/etc/modules-load.d/catalyst.conf ]] && rm /etc/modules-load.d/catalyst.conf #"                      "
+    [[ -f /mnt/etc/X11/xorg.conf ]] && rm /etc/X11/xorg.conf #"                                                    "
+    arch-chroot /mnt pacman --noconfirm -S --needed xf86-video-ati mesa-libgl mesa-vdpau libva-vdpau-driver #Installs AMD drivers
     echo export LIBVA_DRIVER_NAME=vdpau >> /mnt/etc/profile
-    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-vdpau;fi
-    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-libgl;fi
+    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-vdpau;fi #Installs multilib drivers
+    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-libgl;fi #"                       "
     elif [[ -n $(echo ${_vga} | grep "intel corporation") || -f /sys/kernel/debug/dri/0/i915_capabilities ]]; then
-    #Intel
-    arch-chroot /mnt pacman --noconfirm -S --needed xf86-video-intel mesa-libgl libva-intel-driver
-    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-libgl;fi
+    #Intel is detected
+    arch-chroot /mnt pacman --noconfirm -S --needed xf86-video-intel mesa-libgl libva-intel-driver #Installs Intel drivers
+    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-libgl;fi #Install Intel multilib drivers
     else
-    #VESA
-    arch-chroot /mnt pacman --noconfirm -S --needed xf86-video-vesa mesa-libgl libva-vdpau-driver
-    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-libgl;fi
+    #Fallsback to VESA compatibility. (VESA is the standard so will only give basic drivers, with basic performance but should work with everything)
+    arch-chroot /mnt pacman --noconfirm -S --needed xf86-video-vesa mesa-libgl libva-vdpau-driver #Installs VESA drivers
+    if [[ ${ARCHI} == x86_64 ]]; then arch-chroot /mnt pacman --noconfirm -S --needed lib32-mesa-libgl;fi #Install VESA multilib drivers
     echo export LIBVA_DRIVER_NAME=vdpau >> /mnt/etc/profile
     fi
     
@@ -818,54 +823,59 @@ fi
 
 
 
-if [[ $BOOL_CUPS == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST cups cups-filters ghostscript gsfonts gutenprint foomatic-db foomatic-db-engine foomatic-db-nonfree foomatic-filters hplip splix cups-pdf system-config-printer"; fi
+if [[ $BOOL_CUPS == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST cups cups-filters ghostscript gsfonts gutenprint foomatic-db foomatic-db-engine foomatic-db-nonfree foomatic-filters hplip splix cups-pdf system-config-printer"; fi #Sets CUPS (Common Unix Printing System) to be installed (with other drivers such as HP)
 
 if [[ $LOCALE == pt_BR || $LOCALE == en_GB || $LOCALE == zn_CN ]]; then
-    LOCALE_KDE=`echo $LOCALE | tr '[:upper:]' '[:lower:]'`
+    LOCALE_KDE=`echo $LOCALE | tr '[:upper:]' '[:lower:]'` #Sets KDE locale to correct (copied from helmuthdu/aui (GPL3))
 elif [[ $LOCALE == en_US ]]; then
-    LOCALE_KDE="en_gb"
+    LOCALE_KDE="en_gb" #"                                                                                                "
 else
-    LOCALE_KDE=`echo $LOCALE | cut -d\_ -f1`
+    LOCALE_KDE=`echo $LOCALE | cut -d\_ -f1` #"                                                                          "
 fi
 
-#DESKTOPENV
-if [[ $DESKTOP_ENV == Cinnamon ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST cinnamon nemo-fileroller nemo-preview"; fi
-if [[ $DESKTOP_ENV == Enlightenment ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST enlightenment terminology leafpad epdfview lxappearance"; fi
-if [[ $DESKTOP_ENV == GNOME ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST gnome gnome-extra telepathy gedit-plugins gpaste gnome-tweak-tool gnome-power-manager gucharmap gvfs-goa deja-dup"; fi
-if [[ $DESKTOP_ENV == KDE ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST plasma kde-applications-meta kde-meta-kdenetwork kde-meta-kdeutils kde-l10n-$LOCALE_KDE sddm kio-mtp"; fi
-if [[ $DESKTOP_ENV == LXDE ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST lxde leafpad obconf epdfview"; fi
-if [[ $DESKTOP_ENV == LXQT ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST lxqt openbox oxygen-icons qtcurve leafpad epdfview kio-mtp"; fi
-if [[ $DESKTOP_ENV == MATE ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST mate mate-extra"; fi
-if [[ $DESKTOP_ENV == XFCE ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST xfce4 xfce4-goodies xarchiver mupdf"; fi
-if [[ $DESKTOP_ENV == Awesome ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST awesome lxappearance leafpad epdfview nitrogen"; fi
-if [[ $DESKTOP_ENV == Fluxbox ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST fluxbox menumaker lxappearance leafpad epdfview"; fi
-if [[ $DESKTOP_ENV == i3 ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST i3 dmenu"; fi
-if [[ $DESKTOP_ENV == Openbox ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST openbox obconf obmenu menumaker lxappearance leafpad epdfview nitrogen"; fi
-if [[ $DESKTOP_ENV == Xmonad ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST xmonad xmonad-contrib"; fi
+#Desktop Environment Section
+if [[ $DESKTOP_ENV == Cinnamon ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST cinnamon nemo-fileroller nemo-preview"; fi #Sets Cinnamon for installation
+if [[ $DESKTOP_ENV == Enlightenment ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST enlightenment terminology leafpad epdfview lxappearance"; fi #Sets Enlightenment for installation
+if [[ $DESKTOP_ENV == GNOME ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST gnome gnome-extra telepathy gedit-plugins gpaste gnome-tweak-tool gnome-power-manager gucharmap gvfs-goa deja-dup"; fi #Sets gnome for installation
+if [[ $DESKTOP_ENV == KDE ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST plasma kde-applications-meta kde-meta-kdenetwork kde-meta-kdeutils kde-l10n-$LOCALE_KDE sddm kio-mtp"; fi #Sets KDE for installation
+if [[ $DESKTOP_ENV == LXDE ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST lxde leafpad obconf epdfview"; fi #Sets LXDE for installation
+if [[ $DESKTOP_ENV == LXQT ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST lxqt openbox oxygen-icons qtcurve leafpad epdfview kio-mtp"; fi #Sets LXQT for installation
+if [[ $DESKTOP_ENV == MATE ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST mate mate-extra"; fi #Sets MATE for installation
+if [[ $DESKTOP_ENV == XFCE ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST xfce4 xfce4-goodies xarchiver mupdf"; fi #Sets XFCE for installation
+if [[ $DESKTOP_ENV == Awesome ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST awesome lxappearance leafpad epdfview nitrogen"; fi #Sets Awesome for installation
+if [[ $DESKTOP_ENV == Fluxbox ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST fluxbox menumaker lxappearance leafpad epdfview"; fi #Sets fluxbox for installation
+if [[ $DESKTOP_ENV == i3 ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST i3 dmenu"; fi #Sets i3 for installation
+if [[ $DESKTOP_ENV == Openbox ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST openbox obconf obmenu menumaker lxappearance leafpad epdfview nitrogen"; fi #Sets openbox for installation
+if [[ $DESKTOP_ENV == Xmonad ]] && [[ $BOOL_XORG == TRUE ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST xmonad xmonad-contrib"; fi #Sets xmonad for installation
 
-if [[ $DESKTOP_ENV != KDE ]] && [[ $DESKTOP_ENV != LXQT ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST gvfs gvfs-mtp gvfs-afc gvfs-gogle xdg-user-dirs pavucontrol ttf-bitstream-vera ttf-dejavu gnome-defaults-list"; fi
-TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST $DISPLAY_MAN $DISPLAY_MAN_GREETER"
-TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST wxgtk2.8"
-TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST git"
-TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST yajl rsync"
-TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST $CUSTOMPKGS"
+if [[ $DESKTOP_ENV != KDE ]] && [[ $DESKTOP_ENV != LXQT ]]; then TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST gvfs gvfs-mtp gvfs-afc gvfs-gogle xdg-user-dirs pavucontrol ttf-bitstream-vera ttf-dejavu gnome-defaults-list"; fi #Installs tools for non-qt based environments (aka everything gtk or non kde/lxqt)
+TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST $DISPLAY_MAN $DISPLAY_MAN_GREETER" #Adds selected display manager (with greeter for lightdm) to installation
+TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST wxgtk2.8" #Adds extra window system support
+TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST git" #Adds git support for later (to build yaourt etc.)
+TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST yajl rsync" #Adds pre-reqs for yaourt/package-query
+TEMPADDEDTOPOSTINST="$TEMPADDEDTOPOSTINST $CUSTOMPKGS" #Adds predefined custom packages to install
 
 
-if [[ $BOOL_PAMAC == TRUE ]]; then TEMPADDEDAUR="$TEMPADDEDAUR pamac"; fi
-if [[ $BOOL_OCTOPI == TRUE ]]; then TEMPADDEDAUR="$TEMPADDEDAUR octopi"; fi
-if [[ $BOOL_PLYMOUTH == TRUE ]]; then 
+if [[ $BOOL_PAMAC == TRUE ]]; then TEMPADDEDAUR="$TEMPADDEDAUR pamac"; fi #Sets pamac to install (GTK frontend for pacman/yaourt)
+if [[ $BOOL_OCTOPI == TRUE ]]; then TEMPADDEDAUR="$TEMPADDEDAUR octopi"; fi #Sets octopi to install (QT frontend for pacman/yaourt)
+if [[ $BOOL_PLYMOUTH == TRUE ]]; then #Sets plymouth + skin for install
 TEMPADDEDAUR="$TEMPADDEDAUR plymouth"
 TEMPADDEDAUR="$(TEMPADDEDAUR)$PLYMOUTH_VARIANT"
 fi
-if [[ $BOOL_XORG == TRUE ]] && [[ $DISPLAY_MAN != "" ]]; then arch-chroot /mnt systemctl enable $DISPLAY_MAN;fi
 
-mkdir -p /mnt/home/$user/.compose-cache
-pacstrap /mnt $TEMPADDEDTOPOSTINST
-arch-chroot /mnt useradd tempuser
-cp /mnt/etc/sudoers /mnt/etc/sudoers.bak
-echo "tempuser ALL=(ALL) NOPASSWD: ALL" >> /mnt/etc/sudoers
-arch-chroot /mnt su tempuser <<EOF
-mkdir /tmp
+
+mkdir -p /mnt/home/$user/.compose-cache #Creates cache for user (makes sys faster)
+
+
+pacstrap /mnt $TEMPADDEDTOPOSTINST #Installs all added to queue earlier
+
+if [[ $BOOL_XORG == TRUE ]] && [[ $DISPLAY_MAN != "" ]]; then arch-chroot /mnt systemctl enable $DISPLAY_MAN;fi #Enables selected display manager for first boot
+
+arch-chroot /mnt useradd tempuser #Enables a temp-user for makepkg/yaourt
+cp /mnt/etc/sudoers /mnt/etc/sudoers.bak #backs up sudoers
+echo "tempuser ALL=(ALL) NOPASSWD: ALL" >> /mnt/etc/sudoers #Allows tempuser to use sudo without password (For this script to use)
+arch-chroot /mnt su tempuser <<EOF #So that the rest is run in a non-root user
+mkdir /tmp #Creates temp files [Todo] Finish commenting
 mkdir /tmp/tempuser
 cd /tmp/tempuser
 git clone https://aur.archlinux.org/package-query.git
