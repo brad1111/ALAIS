@@ -1,6 +1,6 @@
 #!/bin/bash
 ##Find RAM Section
-TOTAL_RAM=2048 #Ram detection not yet implemented
+TOTAL_RAM=2048 #[Todo] detect RAM
 UEFI=0 #Sets the default Firmware to be BIOS. In case detection fails for some reason.
 user=user #Sets the default user to user if not supplied
 BOOL_BIOS_GPT=FALSE #Not yet implemented
