@@ -875,30 +875,30 @@ arch-chroot /mnt useradd tempuser #Enables a temp-user for makepkg/yaourt
 cp /mnt/etc/sudoers /mnt/etc/sudoers.bak #backs up sudoers
 echo "tempuser ALL=(ALL) NOPASSWD: ALL" >> /mnt/etc/sudoers #Allows tempuser to use sudo without password (For this script to use)
 arch-chroot /mnt su tempuser <<EOF #So that the rest is run in a non-root user
-mkdir /tmp #Creates temp files [Todo] Finish commenting
+mkdir /tmp
 mkdir /tmp/tempuser
 cd /tmp/tempuser
-git clone https://aur.archlinux.org/package-query.git
-git clone https://aur.archlinux.org/yaourt.git
+git clone https://aur.archlinux.org/package-query.git #Downloads package-query as a dependancy to yaourt
+git clone https://aur.archlinux.org/yaourt.git #Downloads yaourt
 cd ./package-query
-makepkg -sci
-cd ../yaourt
-makepkg -sci
+makepkg -sci --noconfirm #Installs package-query
+cd ../yaourt 
+makepkg -sci --noconfirm #Installs yaourt
 cd ..
-rm -R ./package-query
-rm -R ./yaourt
-yaourt --noconfirm -S $TEMPADDEDAUR
-if [[ $BOOL_PlYMOUTH == TRUE ]]; then
-    sed -e "s/ autodetect/ plymouth autodetect/" /etc/mkinitcpio.conf /etc/mkinitcpio.conf
-    sed -e 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/' /etc/default/grub /etc/default/grub
-    grub-mkconfig -o /boot/grub/grub.cfg
-    plymouth-set-default-theme -R $PLYMOUTH_THEME
+rm -R ./package-query #Cleans up temp files
+rm -R ./yaourt #      "                    "
+yaourt --noconfirm -S $TEMPADDEDAUR #Installs all aur packages
+if [[ $BOOL_PlYMOUTH == TRUE ]]; then #Sets up plymouth
+    sed -e "s/ autodetect/ plymouth autodetect/" /etc/mkinitcpio.conf /etc/mkinitcpio.conf #Puts plymouth into initramfs
+    sed -e 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/' /etc/default/grub /etc/default/grub #Allows plymouth to be shown by bootloader
+    grub-mkconfig -o /boot/grub/grub.cfg #Updates bootloader config
+    plymouth-set-default-theme -R $PLYMOUTH_THEME #Updates plymouth theme and initramfs
 fi
 EOF
-umount -R /mnt/boot
-umount -R /mnt
-swapoff $DEVICE_SWAP
+umount -R /mnt/boot #Unmounts boot partition
+umount -R /mnt #Unmounts /root
+swapoff $DEVICE_SWAP #Turns off swap
 clear
 echo If you do not want to restart please press CTRL + C now to cancel rebooting
 sleep 10
-reboot
+reboot #Reboots the machine
