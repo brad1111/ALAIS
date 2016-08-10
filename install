@@ -1,6 +1,16 @@
 #!/bin/bash
 ##Find RAM Section
-TOTAL_RAM=2048 #[Todo] detect RAM
+echo "#!/bin/bash" > ./mem #Allows script to be read by bash
+awk '/MemTotal/ {print "TOTAL_RAM=" $2 / 1024}' /proc/meminfo >> ./mem #Detects RAM in MB and saves it for later
+if [[ -f `pwd`/mem ]] #Only detects memory if file found
+    source `pwd`/mem
+else
+    TOTAL_RAM=2048 #Default fallback RAM size
+fi
+
+##End of Finding RAM Section
+
+
 UEFI=0 #Sets the default Firmware to be BIOS. In case detection fails for some reason.
 user=user #Sets the default user to user if not supplied
 BOOL_BIOS_GPT=FALSE #Not yet implemented
