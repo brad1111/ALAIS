@@ -1,7 +1,7 @@
 #!/bin/bash
 ##Find RAM Section
 echo "#!/bin/bash" > ./mem #Allows script to be read by bash
-awk '/MemTotal/ {print "TOTAL_RAM=" $2 / 1024}' /proc/meminfo >> ./mem #Detects RAM in MB and saves it for later
+awk '/MemTotal/ {print "TOTAL_RAM=" $2 / 1024 + 512}' /proc/meminfo >> ./mem #Detects RAM in MB and saves it for later + 512 is to offset size of boot partition
 if [[ -f `pwd`/mem ]] #Only detects memory if file found
     source `pwd`/mem
 else
