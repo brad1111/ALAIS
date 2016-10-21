@@ -1,4 +1,5 @@
-Arch Lightweight Automatic Install Script
+##Note not currently being actively updated (maybe in future). Will accept PR's.
+#Arch Lightweight Automatic Install Script
 This is an unfinished project based on some of the code of helmuthdu/aui and my fork of it.
 This is a WIP.
 It is designed to be combined with an autoinstall script that sets all of the variables up, so the user does not have to enter anything during arch installation.
